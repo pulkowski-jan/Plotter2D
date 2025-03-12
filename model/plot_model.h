@@ -47,6 +47,8 @@ class PlotData {
 
         PlotData(const PlotData&) = delete;
 
+        PlotData& operator=(const PlotData&) = delete;
+
         ~PlotData();
 
         const Rectangle& domain() const;
