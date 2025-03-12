@@ -1,7 +1,3 @@
-//
-// Created by dzikimlecz on 11.03.25.
-//
-
 #ifndef VISUALIZATION_H
 #define VISUALIZATION_H
 

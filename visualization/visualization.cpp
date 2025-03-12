@@ -1,7 +1,3 @@
-//
-// Created by dzikimlecz on 11.03.25.
-//
-
 #include "visualization.h"
 #include <SFML/Graphics.hpp>
 #include <SFML/Window.hpp>
