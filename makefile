@@ -1,24 +1,22 @@
-CXX = g++
-CXXFLAGS = -std=c++17 -Wall -Wextra -Iparser -Imodel -Ivisualization
-LDFLAGS = -lsfml-graphics -lsfml-window -lsfml-system
+# Build directory
+BUILD_DIR = cmake-build-debug
 
-SRC_DIR = .
-SRC_FILES = $(wildcard $(SRC_DIR)/*.cpp $(SRC_DIR)/model/*.cpp $(SRC_DIR)/visualization/*.cpp)
-OBJ_FILES = $(SRC_FILES:.cpp=.o)
-TARGET = plotter2d
+# Default build type
+BUILD_TYPE ?= Debug
 
-all: $(TARGET)
+# Targets
+.PHONY: all clean rebuild configure build
 
-$(TARGET): $(OBJ_FILES)
-	$(CXX) $(OBJ_FILES) -o $@ $(LDFLAGS)
+all: configure build
 
-%.o: %.cpp
-	$(CXX) $(CXXFLAGS) -c $< -o $@
+configure:
+	@mkdir -p $(BUILD_DIR)
+	@cd $(BUILD_DIR) && cmake -DCMAKE_BUILD_TYPE=$(BUILD_TYPE) ..
 
-run: all
-	./$(TARGET)
+build:
+	@cmake --build $(BUILD_DIR)
 
 clean:
-	rm -f $(OBJ_FILES) $(TARGET)
+	@rm -rf $(BUILD_DIR)
 
-.PHONY: all clean run
+rebuild: clean all

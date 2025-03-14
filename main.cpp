@@ -3,12 +3,12 @@
 #include "visualization/visualization.h"
 
 int main() {
-    const int POINTS = 100;
+    const int POINTS = 1000;
     Point* points = new Point[POINTS];
     for (size_t i = 0; i < POINTS; i++) {
-        points[i] = Point(i, std::sin(i * M_PI_4));
+        points[i] = Point(i, std::sin(0.1 * i * M_PI_4));
     }
-    PlotData plotData(Rectangle(11., 11., Point(0., 0.)), points, POINTS);
+    PlotData plotData(Rectangle(POINTS - 1, 2., Point(0., -1.)), points, POINTS);
     Visualizer v(&plotData);
     v.render();
     delete[] points;
