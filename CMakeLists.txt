@@ -1,11 +1,17 @@
 cmake_minimum_required(VERSION 3.30)
 project(plotter2d)
 
+
+file(GLOB SRC_FILES
+        "${CMAKE_SOURCE_DIR}/*.cpp"
+        "${CMAKE_SOURCE_DIR}/model/*.cpp"
+        "${CMAKE_SOURCE_DIR}/visualization/*.cpp"
+)
+add_executable(${PROJECT_NAME} ${SRC_FILES})
+
 set(CMAKE_CXX_STANDARD 17)
-
-add_executable(plotter2d main.cpp model/plot_model.cpp visualization/visualization.cpp)
-
-target_compile_features(plotter2d PRIVATE cxx_std_17)
-target_link_libraries(plotter2d sfml-graphics)
-target_link_libraries(plotter2d sfml-window)
-target_link_libraries(plotter2d sfml-system)
+target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_17)
+target_link_libraries(${PROJECT_NAME} sfml-graphics)
+target_link_libraries(${PROJECT_NAME} sfml-window)
+target_link_libraries(${PROJECT_NAME} sfml-system)

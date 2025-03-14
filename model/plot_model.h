@@ -18,6 +18,12 @@ class Point {
         double y() const;
 };
 
+/**
+ * A rectangle with given dimensions and anchor point
+ * width - The width of the rectangle
+ * height - The height of the rectangle
+ * anchor - The anchor point (bottom-left corner) of the rectangle
+ */
 class Rectangle {
     double width_;
     double height_;
@@ -37,6 +43,12 @@ class Rectangle {
         const Point& anchor() const;
 };
 
+/**
+ * A set of points to be plotted on a 2D plane
+ * domain - The domain of the plot (a rectangle containing all points)
+ * points - The array of points to plot
+ * pointsCount - The number of points in the array
+ */
 class PlotData {
     Rectangle domain_;
     Point* points_;

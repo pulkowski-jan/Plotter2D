@@ -1,7 +1,3 @@
-//
-// Created by dzikimlecz on 12.03.25.
-//
-
 #ifndef FUNCTION_PARSER_H
 #define FUNCTION_PARSER_H
 
