@@ -55,7 +55,7 @@ class PlotData {
     size_t pointsCount_;
 
     public:
-        PlotData(const Rectangle&, const Point*, size_t);
+        PlotData(const Rectangle&, Point*, size_t);
 
         PlotData(const PlotData&) = delete;
 
