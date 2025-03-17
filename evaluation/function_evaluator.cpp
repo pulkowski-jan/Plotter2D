@@ -7,8 +7,8 @@ PlotData* FunctionEvaluator::evaluate(const ParsedFunction& function, const doub
     if (xMin >= xMax) return nullptr;
     auto* points = new Point[pointsCount];
     const double step = (xMax - xMin) / pointsCount;
-    double yMax = std::numeric_limits<double>::infinity();
-    double yMin = -std::numeric_limits<double>::infinity();
+    double yMax = -std::numeric_limits<double>::infinity();
+    double yMin = std::numeric_limits<double>::infinity();
     unsigned tail = 0;
     for (int i = 0; i < pointsCount; ++i) {
         const double x = xMin + i * step;

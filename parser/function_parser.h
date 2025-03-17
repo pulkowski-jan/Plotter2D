@@ -3,8 +3,9 @@
 
 class ParsedFunction {
   public:
-    ParsedFunction() = delete;
-    virtual double operator()(double x) const;
+        virtual ~ParsedFunction() = default;
+
+        virtual double operator()(double x) const = 0;
 };
 
 #endif //FUNCTION_PARSER_H
