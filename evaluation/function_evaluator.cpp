@@ -20,5 +20,5 @@ PlotData* FunctionEvaluator::evaluate(const ParsedFunction& function, const doub
         }
     }
     return new PlotData(Rectangle(xMax - xMin, yMax - yMin, Point(xMin, yMin)), points,
-                        pointsCount);
+                        tail-1);
 }

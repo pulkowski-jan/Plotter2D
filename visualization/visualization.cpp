@@ -28,7 +28,7 @@ sf::Vertex* Visualizer::renderGraph(const sf::Vector2u& windowSize) const {
         static_cast<unsigned>(windowSize.x * PADDING_SIZE[0]),
         static_cast<unsigned>(windowSize.y * PADDING_SIZE[1])
     };
-    const unsigned effectiveSize[2] = {windowSize.x - 2 * offset[0], windowSize.y - 2 * offset[0]};
+    const unsigned effectiveSize[2] = {windowSize.x - 2 * offset[0], windowSize.y - 2 * offset[1]};
     auto* line = new sf::Vertex[plotData->pointsCount()];
     for (int i = 0; i < plotData->pointsCount(); ++i) {
         const Point& p = plotData->points()[i];
