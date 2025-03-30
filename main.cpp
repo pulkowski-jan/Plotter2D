@@ -1,25 +1,16 @@
-#include <cmath>
 #include <evaluation/function_evaluator.h>
 #include <parser/function_parser.h>
 
 #include "model/plot_model.h"
 #include "visualization/visualization.h"
 
-class Funct final : public ParsedFunction {
-    public:
-        Funct() = default;
-
-        ~Funct() override = default;
-
-        double operator()(const double x) const override {
-            return std::sin(x * M_PI_4);
-        }
-};
-
 int main() {
+    FunctionParser p;
+    const ParsedFunction* parsedFunction = p.parsePolishNotation("* - x / 1 2 * - x 2 * - x 3 * - x 4 - x 5");
     constexpr int POINTS = 1000;
     FunctionEvaluator functionEvaluator;
-    auto* plotData = functionEvaluator.evaluate(Funct(), 0, 10 * M_PI, POINTS);
+    auto* plotData = functionEvaluator.evaluate(*parsedFunction, 0, 5.5, POINTS);
+    delete parsedFunction;
     const Visualizer v(plotData);
     v.render();
     delete plotData;
