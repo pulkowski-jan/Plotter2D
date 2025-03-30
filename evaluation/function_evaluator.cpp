@@ -1,4 +1,5 @@
 #include "function_evaluator.h"
+#include <cfloat>
 #include <cmath>
 #include <limits>
 
@@ -19,6 +20,7 @@ PlotData* FunctionEvaluator::evaluate(const ParsedFunction& function, const doub
             points[tail++] = Point(x, y);
         }
     }
-    return new PlotData(Rectangle(xMax - xMin, yMax - yMin, Point(xMin, yMin)), points,
-                        tail);
+    return new PlotData(
+        Rectangle(xMax - xMin, std::max(yMax - yMin, DBL_TRUE_MIN), Point(xMin, yMin)), points,
+        tail);
 }
