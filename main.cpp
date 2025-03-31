@@ -11,7 +11,7 @@ int main() {
     FunctionEvaluator functionEvaluator;
     auto* plotData = functionEvaluator.evaluate(*parsedFunction, 0, 5.5, POINTS);
     delete parsedFunction;
-    const Visualizer v(plotData);
+    Visualizer v(plotData);
     v.render();
     delete plotData;
 }

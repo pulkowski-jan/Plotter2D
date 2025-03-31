@@ -6,8 +6,8 @@ file(GLOB SRC_FILES
         "${CMAKE_SOURCE_DIR}/*.cpp"
         "${CMAKE_SOURCE_DIR}/model/*.cpp"
         "${CMAKE_SOURCE_DIR}/visualization/*.cpp"
-        "${CMAKE_SOURCE_DIR}/evaluation/*.cpp"
         "${CMAKE_SOURCE_DIR}/parser/*.cpp"
+        "${CMAKE_SOURCE_DIR}/evaluation/*.cpp"
 )
 add_executable(${PROJECT_NAME} ${SRC_FILES})
 
