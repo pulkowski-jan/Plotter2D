@@ -20,7 +20,7 @@ Visualizer::Visualizer(PlotData* plotData) : plotData(plotData), zoomFactor(1.0)
         domain.anchor().y() + domain.height() / 2
     );
 
-    if (!font.loadFromFile("arial.ttf")) {
+    if (!font.loadFromFile("lato.ttf")) {
         std::cerr << "Warning: Failed to load font for zoom buttons" << std::endl;
     }
 }
@@ -127,7 +127,6 @@ void Visualizer::render() {
             } else if (event.type == sf::Event::MouseButtonPressed &&
                      event.mouseButton.button == sf::Mouse::Left) {
                 sf::Vector2f mousePos(event.mouseButton.x, event.mouseButton.y);
-
                 if (this->isPointInButton(mousePos, this->zoomInButton)) {
                     if (this->zoomFactor < MAX_ZOOM) {
                         this->zoomFactor += ZOOM_INCREMENT;
