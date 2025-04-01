@@ -6,8 +6,8 @@
 
 static constexpr unsigned DEFAULT_WINDOW_SIZE = 1000;
 static constexpr double PADDING_SIZE[2] = {0.025, 0.01};
-static constexpr double ZOOM_INCREMENT = 0.2;
-static constexpr double MIN_ZOOM = 0.2;
+static constexpr double ZOOM_INCREMENT = 1.0;
+static constexpr double MIN_ZOOM = 1.0;
 static constexpr double MAX_ZOOM = 5.0;
 static constexpr unsigned BUTTON_WIDTH = 50;
 static constexpr unsigned BUTTON_HEIGHT = 30;
@@ -127,14 +127,15 @@ void Visualizer::render() {
             } else if (event.type == sf::Event::MouseButtonPressed &&
                      event.mouseButton.button == sf::Mouse::Left) {
                 sf::Vector2f mousePos(event.mouseButton.x, event.mouseButton.y);
+
                 if (this->isPointInButton(mousePos, this->zoomInButton)) {
-                    if (this->zoomFactor < MAX_ZOOM) {
+                    if if (this->zoomFactor + ZOOM_INCREMENT <= MAX_ZOOM) {
                         this->zoomFactor += ZOOM_INCREMENT;
                     }
                 }
 
                 if (this->isPointInButton(mousePos, this->zoomOutButton)) {
-                    if (this->zoomFactor > MIN_ZOOM + ZOOM_INCREMENT) {
+                    if (this->zoomFactor >= MIN_ZOOM + ZOOM_INCREMENT) {
                         this->zoomFactor -= ZOOM_INCREMENT;
                     }
                 }
