@@ -7,11 +7,8 @@
 int main() {
     FunctionParser p;
     const ParsedFunction* parsedFunction = p.parsePolishNotation("* - x / 1 2 * - x 2 * - x 3 * - x 4 - x 5");
-    constexpr int POINTS = 1000;
-    FunctionEvaluator functionEvaluator;
-    auto* plotData = functionEvaluator.evaluate(*parsedFunction, 0, 5.5, POINTS);
-    delete parsedFunction;
-    Visualizer v(plotData);
+    constexpr unsigned POINTS = 1000;
+    Visualizer v(parsedFunction, 0, 6, POINTS);
     v.render();
-    delete plotData;
+    delete parsedFunction;
 }
