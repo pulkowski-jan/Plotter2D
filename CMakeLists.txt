@@ -8,7 +8,9 @@ file(GLOB SRC_FILES
         "${CMAKE_SOURCE_DIR}/visualization/*.cpp"
         "${CMAKE_SOURCE_DIR}/parser/*.cpp"
         "${CMAKE_SOURCE_DIR}/evaluation/*.cpp"
+        "${CMAKE_SOURCE_DIR}/interface/*.cpp"
 )
+
 add_executable(${PROJECT_NAME} ${SRC_FILES})
 
 set(CMAKE_CXX_STANDARD 17)
