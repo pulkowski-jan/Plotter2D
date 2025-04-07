@@ -14,16 +14,30 @@ class Visualizer {
     double zoomFactor;
     Point zoomCenter;
 
+    // Zoom UI elements
     sf::RectangleShape zoomInButton;
     sf::RectangleShape zoomOutButton;
-    sf::Font font;
     sf::Text zoomInText;
     sf::Text zoomOutText;
+
+    // Pan UI elements
+    sf::RectangleShape panLeftButton;
+    sf::RectangleShape panRightButton;
+    sf::Text panLeftText;
+    sf::Text panRightText;
+
+    sf::Font font;
     double xMin_;
     double xMax_;
     unsigned pointsCount_;
 
+    // Added to preserve vertical position during panning
+    double yMin_;
+    double yMax_;
+    bool initialPlot_;
+
     void initializeButtons(const sf::Vector2u& windowSize);
+    void updatePlotData();
 
     static bool isPointInButton(const sf::Vector2f& point, const sf::RectangleShape& button);
 
@@ -36,11 +50,15 @@ class Visualizer {
 
     bool shouldReevaluatePlotData() const;
 
-    public:
-        explicit Visualizer(const ParsedFunction* function, double xMin, double xMax,
-                            unsigned pointsCount);
+    // Pan functions
+    void panLeft();
+    void panRight();
 
-        void render();
+public:
+    explicit Visualizer(const ParsedFunction* function, double xMin, double xMax,
+                        unsigned pointsCount);
+
+    void render();
 };
 
 #endif //VISUALIZATION_H
