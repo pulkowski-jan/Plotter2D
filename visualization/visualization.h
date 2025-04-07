@@ -16,20 +16,20 @@ class Visualizer {
     double zoomFactor;
     Point zoomCenter;
 
-    sf::RectangleShape zoomInButton {};
-    sf::RectangleShape zoomOutButton {};
-    sf::Text zoomInText {};
-    sf::Text zoomOutText {};
+    sf::RectangleShape zoomInButton{};
+    sf::RectangleShape zoomOutButton{};
+    sf::Text zoomInText{};
+    sf::Text zoomOutText{};
 
-    sf::RectangleShape panLeftButton {};
-    sf::RectangleShape panRightButton {};
-    sf::Text panLeftText {};
-    sf::Text panRightText {};
+    sf::RectangleShape panLeftButton{};
+    sf::RectangleShape panRightButton{};
+    sf::Text panLeftText{};
+    sf::Text panRightText{};
 
-    sf::RectangleShape rescaleButton {};
-    sf::Text rescaleText {};
+    sf::RectangleShape rescaleButton{};
+    sf::Text rescaleText{};
 
-    sf::Font font {};
+    sf::Font font{};
     double xMin_;
     double xMax_;
     unsigned pointsCount_;
@@ -60,7 +60,9 @@ public:
                         const plotter2d::Options& options);
 
     ~Visualizer();
+
     Visualizer& operator=(const Visualizer&) = delete;
+
     Visualizer(const Visualizer&) = delete;
 
     void render();

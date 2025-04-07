@@ -7,9 +7,9 @@
 
 class ParsedFunction {
     public:
-    virtual ~ParsedFunction() = default;
+        virtual ~ParsedFunction() = default;
 
-    virtual double operator()(double x) const = 0;
+        virtual double operator()(double x) const = 0;
 };
 
 #endif //PARSED_FUNCTION_H

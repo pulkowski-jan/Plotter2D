@@ -22,7 +22,8 @@ void plotter2d::plot(const std::function<double(double)>& func,
 }
 
 void plotter2d::plotFromPolishNotation(const std::string& polishNotation,
-                                       const std::pair<double, double>& domain, const Options options) {
+                                       const std::pair<double, double>& domain,
+                                       const Options options) {
     FunctionParser parser;
     const ParsedFunction* parsedFunction = parser.parsePolishNotation(polishNotation);
     Visualizer visualizer(parsedFunction, domain.first, domain.second, options);

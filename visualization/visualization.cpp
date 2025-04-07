@@ -151,7 +151,7 @@ void Visualizer::updatePlotData() {
     delete plotData;
 
     std::cout << "Evaluating for: [" << xMin_ << "; " << xMax_ << "], with resolution " <<
-    pointsCount_ << "\n";
+            pointsCount_ << "\n";
     plotData = evaluator.evaluate(xMin_, xMax_, pointsCount_);
 
     if (rescaleY_) {
@@ -215,8 +215,10 @@ void Visualizer::render() {
         window.clear(sf::Color::White);
 
         auto lines = renderGraph({DEFAULT_WINDOW_SIZE, DEFAULT_WINDOW_SIZE});
-        window.draw(lines, plotData->pointsCount(), config.approximationMode ==
-        plotter2d::Options::Points ? sf::Points : sf::LineStrip);
+        window.draw(lines, plotData->pointsCount(),
+                    config.approximationMode == plotter2d::Options::Points
+                        ? sf::Points
+                        : sf::LineStrip);
         delete[] lines;
         if (config.drawUi) {
             drawUI(window);
