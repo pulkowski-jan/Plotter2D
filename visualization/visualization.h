@@ -1,6 +1,7 @@
 #ifndef VISUALIZATION_H
 #define VISUALIZATION_H
 
+#include <interface/plotter2d.h>
 #include <SFML/Graphics/RectangleShape.hpp>
 #include <SFML/Graphics/RenderWindow.hpp>
 #include <SFML/Graphics/Text.hpp>
@@ -9,29 +10,33 @@
 #include "model/plot_model.h"
 
 class Visualizer {
+    plotter2d::Options config;
     FunctionEvaluator evaluator;
     PlotData* plotData;
     double zoomFactor;
     Point zoomCenter;
 
-    sf::RectangleShape zoomInButton;
-    sf::RectangleShape zoomOutButton;
-    sf::Text zoomInText;
-    sf::Text zoomOutText;
+    sf::RectangleShape zoomInButton {};
+    sf::RectangleShape zoomOutButton {};
+    sf::Text zoomInText {};
+    sf::Text zoomOutText {};
 
-    sf::RectangleShape panLeftButton;
-    sf::RectangleShape panRightButton;
-    sf::Text panLeftText;
-    sf::Text panRightText;
+    sf::RectangleShape panLeftButton {};
+    sf::RectangleShape panRightButton {};
+    sf::Text panLeftText {};
+    sf::Text panRightText {};
 
-    sf::Font font;
+    sf::RectangleShape rescaleButton {};
+    sf::Text rescaleText {};
+
+    sf::Font font {};
     double xMin_;
     double xMax_;
     unsigned pointsCount_;
 
     double yMin_;
     double yMax_;
-    bool initialPlot_;
+    bool rescaleY_;
 
     void initializeButtons(const sf::Vector2u& windowSize);
     void updatePlotData();
@@ -52,7 +57,11 @@ class Visualizer {
 
 public:
     explicit Visualizer(const ParsedFunction* function, double xMin, double xMax,
-                        unsigned pointsCount);
+                        const plotter2d::Options& options);
+
+    ~Visualizer();
+    Visualizer& operator=(const Visualizer&) = delete;
+    Visualizer(const Visualizer&) = delete;
 
     void render();
 };

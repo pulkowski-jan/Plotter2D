@@ -2,13 +2,7 @@
 #define FUNCTION_PARSER_H
 #include <string>
 #include <vector>
-
-class ParsedFunction {
-    public:
-        virtual ~ParsedFunction() = default;
-
-        virtual double operator()(double x) const = 0;
-};
+#include "parsed_function.h"
 
 class FunctionParser {
     public:
