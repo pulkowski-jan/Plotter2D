@@ -1,25 +1,22 @@
 #include "visualization.h"
 
-#include <SFML/Graphics.hpp>
+#include <iostream>
 #include <SFML/Graphics.hpp>
 #include <SFML/Window.hpp>
-#include <iostream>
 
 static constexpr unsigned DEFAULT_WINDOW_SIZE = 1000;
 static constexpr double PADDING_SIZE[2] = {0.025, 0.01};
-static constexpr double ZOOM_INCREMENT = 1.0;
-static constexpr double MIN_ZOOM = 1.0;
-static constexpr double MAX_ZOOM = 5.0;
+static constexpr double ZOOM_INCREMENT = 0.3;
 static constexpr unsigned BUTTON_WIDTH = 50;
 static constexpr unsigned BUTTON_HEIGHT = 30;
 static constexpr unsigned BUTTON_PADDING = 10;
 static constexpr double PAN_FACTOR = 0.15;
 
-Visualizer::Visualizer(const ParsedFunction* function, double xMin, double xMax,
-                       unsigned pointsCount) : evaluator(*function), plotData(nullptr),
-                                               zoomFactor(1.0), xMin_(xMin), xMax_(xMax),
-                                               pointsCount_(pointsCount), yMin_(0), yMax_(0),
-                                               initialPlot_(true) {
+Visualizer::Visualizer(const ParsedFunction* function, const double xMin, const double xMax,
+                       const unsigned pointsCount) : evaluator(*function), plotData(nullptr),
+                                                     zoomFactor(1.0), xMin_(xMin), xMax_(xMax),
+                                                     pointsCount_(pointsCount), yMin_(0), yMax_(0),
+                                                     initialPlot_(true) {
     if (!font.loadFromFile("lato.ttf")) {
         std::cerr << "Warning: Failed to load font for buttons" << std::endl;
     }
@@ -40,13 +37,15 @@ void Visualizer::initializeButtons(const sf::Vector2u& windowSize) {
     zoomOutButton.setOutlineColor(sf::Color::Black);
 
     panLeftButton.setSize(sf::Vector2f(BUTTON_WIDTH, BUTTON_HEIGHT));
-    panLeftButton.setPosition(windowSize.x / 4 - BUTTON_WIDTH / 2, windowSize.y / 2);
+    panLeftButton.setPosition(windowSize.x - BUTTON_WIDTH - BUTTON_PADDING,
+                              2 * BUTTON_HEIGHT + 3 * BUTTON_PADDING);
     panLeftButton.setFillColor(sf::Color(200, 200, 200));
     panLeftButton.setOutlineThickness(2);
     panLeftButton.setOutlineColor(sf::Color::Black);
 
     panRightButton.setSize(sf::Vector2f(BUTTON_WIDTH, BUTTON_HEIGHT));
-    panRightButton.setPosition(3 * windowSize.x / 4 - BUTTON_WIDTH / 2, windowSize.y / 2);
+    panRightButton.setPosition(windowSize.x - BUTTON_WIDTH - BUTTON_PADDING,
+                               3 * BUTTON_HEIGHT + 4 * BUTTON_PADDING);
     panRightButton.setFillColor(sf::Color(200, 200, 200));
     panRightButton.setOutlineThickness(2);
     panRightButton.setOutlineColor(sf::Color::Black);
@@ -71,22 +70,22 @@ void Visualizer::initializeButtons(const sf::Vector2u& windowSize) {
             2 - 5);
 
         panLeftText.setFont(font);
-        panLeftText.setString("<");
+        panLeftText.setString("<-");
         panLeftText.setCharacterSize(24);
         panLeftText.setFillColor(sf::Color::Black);
         panLeftText.setPosition(
             panLeftButton.getPosition().x + (BUTTON_WIDTH - panLeftText.getLocalBounds().width) / 2,
-            panLeftButton.getPosition().y + (BUTTON_HEIGHT - panLeftText.getLocalBounds().height) / 2
-            - 5);
+            panLeftButton.getPosition().y + (BUTTON_HEIGHT - panLeftText.getLocalBounds().height) /
+            2 - 5);
 
         panRightText.setFont(font);
-        panRightText.setString(">");
+        panRightText.setString("->");
         panRightText.setCharacterSize(24);
         panRightText.setFillColor(sf::Color::Black);
         panRightText.setPosition(
-            panRightButton.getPosition().x + (BUTTON_WIDTH - panRightText.getLocalBounds().width) / 2,
-            panRightButton.getPosition().y + (BUTTON_HEIGHT - panRightText.getLocalBounds().height) / 2
-            - 5);
+            panRightButton.getPosition().x + (BUTTON_WIDTH - panRightText.getLocalBounds().width) /
+            2, panRightButton.getPosition().y + (
+                   BUTTON_HEIGHT - panRightText.getLocalBounds().height) / 2 - 5);
     }
 }
 
@@ -97,9 +96,9 @@ bool Visualizer::isPointInButton(const sf::Vector2f& point, const sf::RectangleS
 
 sf::Vector2f Visualizer::scalePoint(const Point& p, const unsigned effectiveSize[2],
                                     const unsigned offset[2]) const {
-    const double effectiveWidth = (xMax_ - xMin_) / zoomFactor;
+    const double effectiveWidth = xMax_ - xMin_;
 
-    const double effectiveHeight = (yMax_ - yMin_) / zoomFactor;
+    const double effectiveHeight = yMax_ - yMin_;
 
     double centerX = (xMin_ + xMax_) / 2;
     double centerY = (yMin_ + yMax_) / 2;
@@ -146,7 +145,6 @@ void Visualizer::drawUI(sf::RenderWindow& window) const {
     if (!font.getInfo().family.empty()) {
         window.draw(zoomInText);
         window.draw(zoomOutText);
-
         window.draw(panLeftText);
         window.draw(panRightText);
     }
@@ -167,10 +165,6 @@ void Visualizer::panLeft() {
     double panAmount = domainWidth * PAN_FACTOR;
     xMin_ -= panAmount;
     xMax_ -= panAmount;
-    if (plotData != nullptr) {
-        delete plotData;
-        plotData = nullptr;
-    }
 }
 
 void Visualizer::panRight() {
@@ -178,16 +172,10 @@ void Visualizer::panRight() {
     double panAmount = domainWidth * PAN_FACTOR;
     xMin_ += panAmount;
     xMax_ += panAmount;
-    if (plotData != nullptr) {
-        delete plotData;
-        plotData = nullptr;
-    }
 }
 
 void Visualizer::updatePlotData() {
-    if (plotData != nullptr) {
-        delete plotData;
-    }
+    delete plotData;
 
     plotData = evaluator.evaluate(xMin_, xMax_, pointsCount_);
 
@@ -200,13 +188,8 @@ void Visualizer::updatePlotData() {
 }
 
 void Visualizer::render() {
-    if (shouldReevaluatePlotData()) {
-        updatePlotData();
-    }
     sf::RenderWindow window(sf::VideoMode({DEFAULT_WINDOW_SIZE, DEFAULT_WINDOW_SIZE}), "Plotter2D");
-
     initializeButtons({DEFAULT_WINDOW_SIZE, DEFAULT_WINDOW_SIZE});
-
     while (window.isOpen()) {
         sf::Event event{};
         while (window.pollEvent(event)) {
@@ -217,26 +200,27 @@ void Visualizer::render() {
                 sf::Vector2f mousePos(event.mouseButton.x, event.mouseButton.y);
 
                 if (isPointInButton(mousePos, this->zoomInButton)) {
-                    if (this->zoomFactor + ZOOM_INCREMENT <= MAX_ZOOM) {
-                        this->zoomFactor += ZOOM_INCREMENT;
-                    }
+                    double growth = (xMax_ - xMin_) * ZOOM_INCREMENT;
+                    xMin_ += 0.5 * growth;
+                    xMax_ -= 0.5 * growth;
                 }
 
                 if (isPointInButton(mousePos, this->zoomOutButton)) {
-                    if (this->zoomFactor >= MIN_ZOOM + ZOOM_INCREMENT) {
-                        this->zoomFactor -= ZOOM_INCREMENT;
-                    }
+                    double growth = (xMax_ - xMin_) * ZOOM_INCREMENT;
+                    xMin_ -= 0.5 * growth;
+                    xMax_ += 0.5 * growth;
                 }
 
                 if (isPointInButton(mousePos, this->panLeftButton)) {
                     panLeft();
-                    updatePlotData();
                 }
 
                 if (isPointInButton(mousePos, this->panRightButton)) {
                     panRight();
-                    updatePlotData();
                 }
+            }
+            if (shouldReevaluatePlotData()) {
+                updatePlotData();
             }
         }
 
