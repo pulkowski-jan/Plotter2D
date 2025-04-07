@@ -13,7 +13,7 @@ static constexpr double MAX_ZOOM = 5.0;
 static constexpr unsigned BUTTON_WIDTH = 50;
 static constexpr unsigned BUTTON_HEIGHT = 30;
 static constexpr unsigned BUTTON_PADDING = 10;
-static constexpr double PAN_FACTOR = 0.15; // Pan by 15% of domain width
+static constexpr double PAN_FACTOR = 0.15;
 
 Visualizer::Visualizer(const ParsedFunction* function, double xMin, double xMax,
                        unsigned pointsCount) : evaluator(*function), plotData(nullptr),
@@ -26,7 +26,6 @@ Visualizer::Visualizer(const ParsedFunction* function, double xMin, double xMax,
 }
 
 void Visualizer::initializeButtons(const sf::Vector2u& windowSize) {
-    // Zoom buttons
     zoomInButton.setSize(sf::Vector2f(BUTTON_WIDTH, BUTTON_HEIGHT));
     zoomInButton.setPosition(windowSize.x - BUTTON_WIDTH - BUTTON_PADDING, BUTTON_PADDING);
     zoomInButton.setFillColor(sf::Color(200, 200, 200));
@@ -40,7 +39,6 @@ void Visualizer::initializeButtons(const sf::Vector2u& windowSize) {
     zoomOutButton.setOutlineThickness(2);
     zoomOutButton.setOutlineColor(sf::Color::Black);
 
-    // Pan left and right buttons
     panLeftButton.setSize(sf::Vector2f(BUTTON_WIDTH, BUTTON_HEIGHT));
     panLeftButton.setPosition(windowSize.x / 4 - BUTTON_WIDTH / 2, windowSize.y / 2);
     panLeftButton.setFillColor(sf::Color(200, 200, 200));
@@ -54,7 +52,6 @@ void Visualizer::initializeButtons(const sf::Vector2u& windowSize) {
     panRightButton.setOutlineColor(sf::Color::Black);
 
     if (!font.getInfo().family.empty()) {
-        // Zoom button texts
         zoomInText.setFont(font);
         zoomInText.setString("+");
         zoomInText.setCharacterSize(24);
@@ -73,7 +70,6 @@ void Visualizer::initializeButtons(const sf::Vector2u& windowSize) {
             zoomOutButton.getPosition().y + (BUTTON_HEIGHT - zoomOutText.getLocalBounds().height) /
             2 - 5);
 
-        // Pan button texts
         panLeftText.setFont(font);
         panLeftText.setString("<");
         panLeftText.setCharacterSize(24);
@@ -101,28 +97,21 @@ bool Visualizer::isPointInButton(const sf::Vector2f& point, const sf::RectangleS
 
 sf::Vector2f Visualizer::scalePoint(const Point& p, const unsigned effectiveSize[2],
                                     const unsigned offset[2]) const {
-    // Calculate the effective width based on zoom
     const double effectiveWidth = (xMax_ - xMin_) / zoomFactor;
 
-    // Calculate the effective height based on zoom
     const double effectiveHeight = (yMax_ - yMin_) / zoomFactor;
 
-    // Calculate the center points
     double centerX = (xMin_ + xMax_) / 2;
     double centerY = (yMin_ + yMax_) / 2;
 
-    // Calculate the effective anchor
     const double effectiveAnchorX = centerX - effectiveWidth / 2;
     const double effectiveAnchorY = centerY - effectiveHeight / 2;
 
-    // Scale the point
     auto x = (p.x() - effectiveAnchorX) / effectiveWidth * effectiveSize[0];
     auto y = (p.y() - effectiveAnchorY) / effectiveHeight * effectiveSize[1];
 
-    // Flip y-coordinate (since y grows downward in window coordinates)
     y = effectiveSize[1] - y;
 
-    // Add padding offsets
     x += offset[0];
     y += offset[1];
 
@@ -148,20 +137,16 @@ sf::Vertex* Visualizer::renderGraph(const sf::Vector2u& windowSize) const {
 }
 
 void Visualizer::drawUI(sf::RenderWindow& window) const {
-    // Draw zoom buttons
     window.draw(zoomInButton);
     window.draw(zoomOutButton);
 
-    // Draw pan buttons
     window.draw(panLeftButton);
     window.draw(panRightButton);
 
     if (!font.getInfo().family.empty()) {
-        // Draw zoom button texts
         window.draw(zoomInText);
         window.draw(zoomOutText);
 
-        // Draw pan button texts
         window.draw(panLeftText);
         window.draw(panRightText);
     }
@@ -204,17 +189,14 @@ void Visualizer::updatePlotData() {
         delete plotData;
     }
 
-    // Get new plot data for the current domain
     plotData = evaluator.evaluate(xMin_, xMax_, pointsCount_);
 
-    // If this is the first plot or we need to reset y-range
     if (initialPlot_) {
         const Rectangle& domain = plotData->domain();
         yMin_ = domain.anchor().y();
         yMax_ = domain.anchor().y() + domain.height();
         initialPlot_ = false;
     }
-    // Otherwise, we maintain the existing y-range for panning stability
 }
 
 void Visualizer::render() {
@@ -246,17 +228,13 @@ void Visualizer::render() {
                     }
                 }
 
-                // Handle pan left button click
                 if (isPointInButton(mousePos, this->panLeftButton)) {
                     panLeft();
-                    // Force re-evaluate plot data
                     updatePlotData();
                 }
 
-                // Handle pan right button click
                 if (isPointInButton(mousePos, this->panRightButton)) {
                     panRight();
-                    // Force re-evaluate plot data
                     updatePlotData();
                 }
             }
