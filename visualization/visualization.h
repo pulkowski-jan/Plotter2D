@@ -37,6 +37,9 @@ class Visualizer {
     double yMin_;
     double yMax_;
     bool rescaleY_;
+    bool useCustomPlotRange_;
+    mutable int validPointCount_;
+    std::pair<double,double> plotRange_;
 
     void initializeButtons(const sf::Vector2u& windowSize);
     void updatePlotData();
