@@ -45,12 +45,20 @@ class Visualizer {
 
     void updatePlotData();
 
+    void drawGraph(sf::RenderWindow& window, const sf::Vertex* lines) const;
+
     static bool isPointInButton(const sf::Vector2f& point, const sf::RectangleShape& button);
 
     sf::Vector2f scalePoint(const Point& p, const unsigned effectiveSize[2],
                             const unsigned offset[2]) const;
 
     sf::Vertex* renderGraph(const sf::Vector2u& windowSize) const;
+
+    static double calculateAxisPosition(double min, double max);
+
+    std::vector<sf::Vertex> renderGrid(const sf::Vector2u& windowSize) const;
+
+    std::vector<sf::Vertex> renderAxes(const sf::Vector2u& windowSize) const;
 
     void drawUI(sf::RenderWindow& window) const;
 
@@ -71,6 +79,8 @@ class Visualizer {
         Visualizer(const Visualizer&) = delete;
 
         void render();
+        void drawVertices(sf::RenderWindow& window, std::vector<sf::Vertex> axes) const;
+
 };
 
 #endif //VISUALIZATION_H

@@ -11,6 +11,7 @@ static constexpr unsigned BUTTON_WIDTH = 50;
 static constexpr unsigned BUTTON_HEIGHT = 30;
 static constexpr unsigned BUTTON_PADDING = 10;
 static constexpr double PAN_FACTOR = 0.15;
+static constexpr unsigned GRID_SIZE = 10;
 
 Visualizer::Visualizer(const ParsedFunction* function, const double xMin, const double xMax,
                        const plotter2d::Options& options) : config(options), evaluator(*function),
@@ -107,7 +108,7 @@ sf::Vertex* Visualizer::renderGraph(const sf::Vector2u& windowSize) const {
             continue;
         }
         sf::Vertex v(scalePoint(p, effectiveSize, offset));
-        v.color = sf::Color::Black;
+        v.color = sf::Color(config.graphColor);
         line[validPointCount_++] = v;
     }
 
@@ -122,6 +123,92 @@ sf::Vertex* Visualizer::renderGraph(const sf::Vector2u& windowSize) const {
     }
 
     return line;
+}
+
+double Visualizer::calculateAxisPosition(const double min, const double max) {
+    if (min <= 0 && 0 <= max) {
+        return 0.0;
+    }
+    if (min >= 0) {
+        return min;
+    }
+    return max;
+}
+
+std::vector<sf::Vertex> Visualizer::renderGrid(const sf::Vector2u& windowSize) const {
+    const unsigned offset[2] = {
+        static_cast<unsigned>(windowSize.x * PADDING_SIZE[0]),
+        static_cast<unsigned>(windowSize.y * PADDING_SIZE[1])
+    };
+    const unsigned effectiveSize[2] = {windowSize.x - 2 * offset[0], windowSize.y - 2 * offset[1]};
+    std::vector<sf::Vector2f> grid;
+    grid.reserve(GRID_SIZE * 4);
+    const double xStep = (xMax_ - xMin_) / (GRID_SIZE);
+    const double xAxis = calculateAxisPosition(xMin_, xMax_);
+    for (int i = 1; i <= GRID_SIZE; ++i) {
+        const double x = xAxis == xMax_ ? xAxis - i * xStep : xAxis + i * xStep;
+        grid.emplace_back(scalePoint(Point(x, yMin_), effectiveSize, offset));
+        grid.emplace_back(scalePoint(Point(x, yMax_), effectiveSize, offset));
+    }
+    for (int i = 1; i <= GRID_SIZE; ++i) {
+        const double x = xAxis == 0. ? xAxis - i * xStep : xAxis == xMin_ ? xAxis + (GRID_SIZE + i) * xStep : xAxis - (GRID_SIZE + i) * xStep;
+        grid.emplace_back(scalePoint(Point(x, yMin_), effectiveSize, offset));
+        grid.emplace_back(scalePoint(Point(x, yMax_), effectiveSize, offset));
+    }
+    const double yStep = (yMax_ - yMin_) / (GRID_SIZE);
+    const double yAxis = calculateAxisPosition(yMin_, yMax_);
+    for (int i = 1; i <= GRID_SIZE; ++i) {
+        const double y = yAxis == yMax_ ? yAxis - i * yStep : yAxis + i * yStep;
+        grid.emplace_back(scalePoint(Point(xMin_, y), effectiveSize, offset));
+        grid.emplace_back(scalePoint(Point(xMax_, y), effectiveSize, offset));
+    }
+    for (int i = 1; i <= GRID_SIZE; ++i) {
+        const double y = yAxis == 0. ? yAxis - i * yStep : yAxis == yMin_ ? yAxis + (GRID_SIZE + i) * yStep : yAxis - (GRID_SIZE + i) * yStep;
+        grid.emplace_back(scalePoint(Point(xMin_, y), effectiveSize, offset));
+        grid.emplace_back(scalePoint(Point(xMax_, y), effectiveSize, offset));
+    }
+    std::vector<sf::Vertex> result;
+    result.reserve(grid.size());
+    std::transform(grid.begin(), grid.end(), std::back_inserter(result),
+                   [](const sf::Vector2f& pos) {
+                       return sf::Vertex(pos, sf::Color(0xAAAAAAFF));
+                   });
+    return result;
+}
+
+std::vector<sf::Vertex> Visualizer::renderAxes(const sf::Vector2u& windowSize) const {
+    const unsigned offset[2] = {
+        static_cast<unsigned>(windowSize.x * PADDING_SIZE[0]),
+        static_cast<unsigned>(windowSize.y * PADDING_SIZE[1])
+    };
+    const unsigned effectiveSize[2] = {windowSize.x - 2 * offset[0], windowSize.y - 2 * offset[1]};
+    const double xAxisPosY = calculateAxisPosition(yMin_, yMax_);
+    const double yAxisPosX = calculateAxisPosition(xMin_, xMax_);
+    std::vector<sf::Vector2f> vectors;
+    vectors.push_back(scalePoint(Point(xMin_, xAxisPosY), effectiveSize, offset));
+    vectors.push_back(scalePoint(Point(xMax_, xAxisPosY), effectiveSize, offset));
+    vectors.push_back(scalePoint(Point(yAxisPosX, yMin_), effectiveSize, offset));
+    vectors.push_back(scalePoint(Point(yAxisPosX, yMax_), effectiveSize, offset));
+    vectors.emplace_back(vectors[1]);
+    vectors.emplace_back(vectors[1].x - effectiveSize[0] * 0.01,
+                         vectors[1].y + effectiveSize[1] * 0.005);
+    vectors.emplace_back(vectors[1]);
+    vectors.emplace_back(vectors[1].x - effectiveSize[0] * 0.01,
+                         vectors[1].y - effectiveSize[1] * 0.005);
+    vectors.emplace_back(vectors[3]);
+    vectors.emplace_back(vectors[3].x - effectiveSize[0] * 0.005,
+                         vectors[3].y + effectiveSize[1] * 0.01);
+    vectors.emplace_back(vectors[3]);
+    vectors.emplace_back(vectors[3].x + effectiveSize[0] * 0.005,
+                         vectors[3].y + effectiveSize[1] * 0.01);
+
+    std::vector<sf::Vertex> result;
+    result.reserve(vectors.size());
+    std::transform(vectors.begin(), vectors.end(), std::back_inserter(result),
+                   [](const sf::Vector2f& pos) {
+                       return sf::Vertex(pos, sf::Color::Black);
+                   });
+    return result;
 }
 
 void Visualizer::drawUI(sf::RenderWindow& window) const {
@@ -186,6 +273,17 @@ void Visualizer::updatePlotData() {
     }
 }
 
+void Visualizer::drawGraph(sf::RenderWindow& window, const sf::Vertex* lines) const {
+    window.draw(lines, validPointCount_,
+                config.approximationMode == plotter2d::Options::Points
+                    ? sf::Points
+                    : sf::LineStrip);
+}
+
+void Visualizer::drawVertices(sf::RenderWindow& window, const std::vector<sf::Vertex> axes) const {
+    window.draw(axes.data(), axes.size(), sf::Lines);
+}
+
 void Visualizer::render() {
     sf::RenderWindow window(sf::VideoMode({DEFAULT_WINDOW_SIZE, DEFAULT_WINDOW_SIZE}), "Plotter2D");
     if (config.drawUi) {
@@ -237,12 +335,17 @@ void Visualizer::render() {
 
         window.clear(sf::Color::White);
 
-        auto lines = renderGraph({DEFAULT_WINDOW_SIZE, DEFAULT_WINDOW_SIZE});
-        window.draw(lines, validPointCount_,
-                    config.approximationMode == plotter2d::Options::Points
-                        ? sf::Points
-                        : sf::LineStrip);
-        delete[] lines;
+        if (config.drawAxes) {
+            auto grid = renderGrid({DEFAULT_WINDOW_SIZE, DEFAULT_WINDOW_SIZE});
+            drawVertices(window, grid);
+        }
+        if (config.drawAxes) {
+            auto axes = renderAxes({DEFAULT_WINDOW_SIZE, DEFAULT_WINDOW_SIZE});
+            drawVertices(window, axes);
+        }
+        auto graph = renderGraph({DEFAULT_WINDOW_SIZE, DEFAULT_WINDOW_SIZE});
+        drawGraph(window, graph);
+        delete[] graph;
         if (config.drawUi) {
             drawUI(window);
         }
