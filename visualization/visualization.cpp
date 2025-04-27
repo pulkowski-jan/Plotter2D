@@ -109,8 +109,6 @@ sf::Vertex* Visualizer::renderGraph(const sf::Vector2u& windowSize) const {
         v.color = sf::Color::Black;
         line[validPointCount_++] = v;
     }
-
-    if (validPointCount_ < plotData->pointsCount()) {
         auto* filteredLine = new sf::Vertex[validPointCount_];
         for (int i = 0; i < validPointCount_; ++i) {
             filteredLine[i] = line[i];
@@ -118,7 +116,7 @@ sf::Vertex* Visualizer::renderGraph(const sf::Vector2u& windowSize) const {
         delete[] line;
 
         return filteredLine;
-    }
+
 
     return line;
 }
@@ -177,12 +175,16 @@ void Visualizer::updatePlotData() {
         yMin_ = domain.anchor().y();
         yMax_ = domain.anchor().y() + domain.height();
         if (useCustomPlotRange_) {
-            yMin_ = plotRange_.first;
-            yMax_ = plotRange_.second;
+            double functionMinY = domain.anchor().y();
+            double functionMaxY = domain.anchor().y() + domain.height();
+
+            yMin_ = std::max(plotRange_.first, functionMinY);
+            yMax_ = std::min(plotRange_.second, functionMaxY);
         } else {
             yMin_ = domain.anchor().y();
             yMax_ = domain.anchor().y() + domain.height();
         }
+
 
         rescaleY_ = false;
     }
