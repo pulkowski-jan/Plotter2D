@@ -10,10 +10,11 @@ int main() {
     };
     constexpr auto domain = std::make_pair(-3.0, 3.0);
     plotter2d::plot(f, domain,
-                    plotter2d::OptionsBuilder().approximationMode(plotter2d::Options::Lines).
-                    resolution(1000).drawAxes(false).build());
+                    plotter2d::OptionsBuilder().resolution(5000).plotRange(std::make_pair(-10, 10)).
+                    graphColor(0x0000ffff).build());
     plotter2d::plot(f, domain,
                     plotter2d::OptionsBuilder().approximationMode(plotter2d::Options::Lines).
+                    drawAxes(false).
                     resolution(20).graphColor(0xFF0000FF).build());
     plotter2d::plotFromPolishNotation("* - x / 1 2 * - x 2 * - x 3 * - x 4 - x 5",
                                       std::make_pair(0, 6));

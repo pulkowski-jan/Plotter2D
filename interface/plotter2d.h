@@ -23,16 +23,19 @@ namespace plotter2d {
         Options();
 
         Options(bool drawUi, bool drawAxes, bool drawGrid, ApproximationMode approximationMode,
-                unsigned resolution, unsigned graphColor);
+                unsigned resolution, bool useCustomPlotRange, const std::pair<double,double>& plotRange, unsigned graphColor);
+
     };
 
     class OptionsBuilder {
         bool drawUi_ = true;
-        Options::ApproximationMode approximationMode_ = Options::Lines;
+        Options::ApproximationMode approximationMode_ = Options::Points;
         unsigned resolution_ = 5000;
         bool drawAxes_ = true;
         bool drawGrid_ = true;
         unsigned graphColor_ = 0x000000FF;
+        std::pair<double,double> plotRange_ {};
+        bool useCustomPlotRange_ = false;
 
         public:
             OptionsBuilder& drawUi(bool value);
@@ -46,6 +49,10 @@ namespace plotter2d {
             OptionsBuilder& drawGrid(bool value);
 
             OptionsBuilder& graphColor(unsigned value);
+
+            OptionsBuilder& plotRange(const std::pair<double,double>& range);
+
+            OptionsBuilder& useCustomPlotRange(bool value);
 
             Options build() const;
     };
