@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 3.25)
 project(plotter2d)
 
-
 file(GLOB SRC_FILES
         "${CMAKE_SOURCE_DIR}/*.cpp"
         "${CMAKE_SOURCE_DIR}/model/*.cpp"
@@ -10,7 +9,6 @@ file(GLOB SRC_FILES
         "${CMAKE_SOURCE_DIR}/evaluation/*.cpp"
         "${CMAKE_SOURCE_DIR}/interface/*.cpp"
 )
-
 add_executable(${PROJECT_NAME} ${SRC_FILES})
 
 set(CMAKE_CXX_STANDARD 17)

@@ -37,8 +37,12 @@ class Visualizer {
     double yMin_;
     double yMax_;
     bool rescaleY_;
+    bool useCustomPlotRange_;
+    mutable int validPointCount_;
+    std::pair<double, double> plotRange_;
 
     void initializeButtons(const sf::Vector2u& windowSize);
+
     void updatePlotData();
 
     static bool isPointInButton(const sf::Vector2f& point, const sf::RectangleShape& button);
@@ -53,19 +57,20 @@ class Visualizer {
     bool shouldReevaluatePlotData() const;
 
     void panLeft();
+
     void panRight();
 
-public:
-    explicit Visualizer(const ParsedFunction* function, double xMin, double xMax,
-                        const plotter2d::Options& options);
+    public:
+        explicit Visualizer(const ParsedFunction* function, double xMin, double xMax,
+                            const plotter2d::Options& options);
 
-    ~Visualizer();
+        ~Visualizer();
 
-    Visualizer& operator=(const Visualizer&) = delete;
+        Visualizer& operator=(const Visualizer&) = delete;
 
-    Visualizer(const Visualizer&) = delete;
+        Visualizer(const Visualizer&) = delete;
 
-    void render();
+        void render();
 };
 
 #endif //VISUALIZATION_H
