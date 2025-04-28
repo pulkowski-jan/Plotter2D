@@ -18,7 +18,8 @@ Visualizer::Visualizer(const ParsedFunction* function, const double xMin, const 
                                                             xMin_(xMin), xMax_(xMax),
                                                             pointsCount_(options.resolution),
                                                             yMin_(0), yMax_(0), rescaleY_(true),
-                                                            useCustomPlotRange_(options.useCustomPlotRange),
+                                                            useCustomPlotRange_(
+                                                                options.useCustomPlotRange),
                                                             plotRange_(options.plotRange) {
     if (!font.loadFromFile("lato.ttf")) {
         std::cerr << "Warning: Failed to load font for buttons" << std::endl;
@@ -109,6 +110,8 @@ sf::Vertex* Visualizer::renderGraph(const sf::Vector2u& windowSize) const {
         v.color = sf::Color::Black;
         line[validPointCount_++] = v;
     }
+
+    if (validPointCount_ < plotData->pointsCount()) {
         auto* filteredLine = new sf::Vertex[validPointCount_];
         for (int i = 0; i < validPointCount_; ++i) {
             filteredLine[i] = line[i];
@@ -116,7 +119,7 @@ sf::Vertex* Visualizer::renderGraph(const sf::Vector2u& windowSize) const {
         delete[] line;
 
         return filteredLine;
-
+    }
 
     return line;
 }
@@ -172,20 +175,13 @@ void Visualizer::updatePlotData() {
     if (rescaleY_) {
         std::cout << std::flush;
         const Rectangle& domain = plotData->domain();
-        yMin_ = domain.anchor().y();
-        yMax_ = domain.anchor().y() + domain.height();
         if (useCustomPlotRange_) {
-            double functionMinY = domain.anchor().y();
-            double functionMaxY = domain.anchor().y() + domain.height();
-
-            yMin_ = std::max(plotRange_.first, functionMinY);
-            yMax_ = std::min(plotRange_.second, functionMaxY);
+            yMin_ = plotRange_.first;
+            yMax_ = plotRange_.second;
         } else {
             yMin_ = domain.anchor().y();
             yMax_ = domain.anchor().y() + domain.height();
         }
-
-
         rescaleY_ = false;
     }
 }

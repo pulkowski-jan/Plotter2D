@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 3.25)
 project(plotter2d)
 
-
 file(GLOB SRC_FILES
         "${CMAKE_SOURCE_DIR}/*.cpp"
         "${CMAKE_SOURCE_DIR}/model/*.cpp"
