@@ -47,7 +47,8 @@ class Visualizer {
 
     void drawGraph(sf::RenderWindow& window, const sf::Vertex* lines) const;
 
-    static bool isMouseInButton(const sf::Vector2f& mousePosition, const sf::RectangleShape& button);
+    static bool isMouseInButton(const sf::Vector2f& mousePosition,
+                                const sf::RectangleShape& button);
 
     sf::Vector2f scalePoint(const Point& p, const unsigned effectiveSize[2],
                             const unsigned offset[2]) const;

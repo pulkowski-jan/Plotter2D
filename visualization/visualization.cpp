@@ -317,10 +317,10 @@ void Visualizer::zoomOut() {
 
 sf::Vector2f scaleMousePositionToAbsolute(int x, int y, sf::Vector2u windowSize) {
     return {
-        static_cast<float>(x) * (static_cast<float>(ABSOLUTE_WINDOW_SIZE) / static_cast<float>
-        (windowSize.x)),
-        static_cast<float>(y) * (static_cast<float>(ABSOLUTE_WINDOW_SIZE) / static_cast<float>
-        (windowSize.y))
+        static_cast<float>(x) * (static_cast<float>(ABSOLUTE_WINDOW_SIZE) / static_cast<float>(
+                                     windowSize.x)),
+        static_cast<float>(y) * (static_cast<float>(ABSOLUTE_WINDOW_SIZE) / static_cast<float>(
+                                     windowSize.y))
     };
 }
 
