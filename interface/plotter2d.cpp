@@ -98,5 +98,8 @@ plotter2d::Options plotter2d::OptionsBuilder::build() const {
     if (useCustomPlotRange_ && plotRange_ == std::pair<double, double>()) {
         customPlotRange = false;
     }
-    return {drawUi_, drawAxes_, drawGrid_, approximationMode_, resolution_, customPlotRange, plotRange_, graphColor_};
+    return {
+        drawUi_, drawAxes_, drawGrid_, approximationMode_, resolution_, customPlotRange, plotRange_,
+        graphColor_
+    };
 }

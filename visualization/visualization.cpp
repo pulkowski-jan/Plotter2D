@@ -4,7 +4,7 @@
 #include <SFML/Graphics.hpp>
 #include <SFML/Window.hpp>
 
-static constexpr unsigned DEFAULT_WINDOW_SIZE = 1000;
+static constexpr unsigned ABSOLUTE_WINDOW_SIZE = 700;
 static constexpr double PADDING_SIZE[2] = {0.025, 0.01};
 static constexpr double ZOOM_INCREMENT = 0.3;
 static constexpr unsigned BUTTON_WIDTH = 50;
@@ -21,6 +21,7 @@ Visualizer::Visualizer(const ParsedFunction* function, const double xMin, const 
                                                             yMin_(0), yMax_(0), rescaleY_(true),
                                                             useCustomPlotRange_(
                                                                 options.useCustomPlotRange),
+                                                            validPointCount_(0),
                                                             plotRange_(options.plotRange) {
     if (!font.loadFromFile("lato.ttf")) {
         std::cerr << "Warning: Failed to load font for buttons" << std::endl;
@@ -64,9 +65,10 @@ void Visualizer::initializeButtons(const sf::Vector2u& windowSize) {
     }
 }
 
-bool Visualizer::isPointInButton(const sf::Vector2f& point, const sf::RectangleShape& button) {
+bool Visualizer::isMouseInButton(const sf::Vector2f& mousePosition,
+                                 const sf::RectangleShape& button) {
     const sf::FloatRect bounds = button.getGlobalBounds();
-    return bounds.contains(point);
+    return bounds.contains(mousePosition);
 }
 
 sf::Vector2f Visualizer::scalePoint(const Point& p, const unsigned effectiveSize[2],
@@ -151,7 +153,11 @@ std::vector<sf::Vertex> Visualizer::renderGrid(const sf::Vector2u& windowSize) c
         grid.emplace_back(scalePoint(Point(x, yMax_), effectiveSize, offset));
     }
     for (int i = 1; i <= GRID_SIZE; ++i) {
-        const double x = xAxis == 0. ? xAxis - i * xStep : xAxis == xMin_ ? xAxis + (GRID_SIZE + i) * xStep : xAxis - (GRID_SIZE + i) * xStep;
+        const double x = xAxis == 0.
+                             ? xAxis - i * xStep
+                             : xAxis == xMin_
+                                   ? xAxis + (GRID_SIZE + i) * xStep
+                                   : xAxis - (GRID_SIZE + i) * xStep;
         grid.emplace_back(scalePoint(Point(x, yMin_), effectiveSize, offset));
         grid.emplace_back(scalePoint(Point(x, yMax_), effectiveSize, offset));
     }
@@ -163,7 +169,11 @@ std::vector<sf::Vertex> Visualizer::renderGrid(const sf::Vector2u& windowSize) c
         grid.emplace_back(scalePoint(Point(xMax_, y), effectiveSize, offset));
     }
     for (int i = 1; i <= GRID_SIZE; ++i) {
-        const double y = yAxis == 0. ? yAxis - i * yStep : yAxis == yMin_ ? yAxis + (GRID_SIZE + i) * yStep : yAxis - (GRID_SIZE + i) * yStep;
+        const double y = yAxis == 0.
+                             ? yAxis - i * yStep
+                             : yAxis == yMin_
+                                   ? yAxis + (GRID_SIZE + i) * yStep
+                                   : yAxis - (GRID_SIZE + i) * yStep;
         grid.emplace_back(scalePoint(Point(xMin_, y), effectiveSize, offset));
         grid.emplace_back(scalePoint(Point(xMax_, y), effectiveSize, offset));
     }
@@ -228,14 +238,18 @@ void Visualizer::drawUI(sf::RenderWindow& window) const {
     }
 }
 
+bool Visualizer::doublesSignificantlyDiffer(const double a, const double b) {
+    return (a - b) >= 1e-14;
+}
+
 bool Visualizer::shouldReevaluatePlotData() const {
     if (plotData == nullptr || rescaleY_) {
         return true;
     }
     const Rectangle& domain = plotData->domain();
     const double xAnchor = domain.anchor().x();
-    return plotData->pointsCount() != pointsCount_ || xAnchor != xMin_ || xAnchor + domain.width()
-           != xMax_;
+    return plotData->pointsCount() != pointsCount_ || doublesSignificantlyDiffer(xAnchor, xMin_) ||
+           doublesSignificantlyDiffer(xAnchor + domain.width(), xMax_);
 }
 
 void Visualizer::panLeft() {
@@ -274,20 +288,47 @@ void Visualizer::updatePlotData() {
 }
 
 void Visualizer::drawGraph(sf::RenderWindow& window, const sf::Vertex* lines) const {
-    window.draw(lines, validPointCount_,
-                config.approximationMode == plotter2d::Options::Points
-                    ? sf::Points
-                    : sf::LineStrip);
+    window.draw(lines, validPointCount_, config.approximationMode == plotter2d::Options::Points
+                                             ? sf::Points
+                                             : sf::LineStrip);
 }
 
-void Visualizer::drawVertices(sf::RenderWindow& window, const std::vector<sf::Vertex> axes) const {
+void Visualizer::drawVertices(sf::RenderWindow& window, const std::vector<sf::Vertex>& axes) {
     window.draw(axes.data(), axes.size(), sf::Lines);
 }
 
+void Visualizer::zoomIn() {
+    double xGrowth = (xMax_ - xMin_) * ZOOM_INCREMENT;
+    double yGrowth = (yMax_ - yMin_) * ZOOM_INCREMENT;
+    xMin_ += 0.5 * xGrowth;
+    xMax_ -= 0.5 * xGrowth;
+    yMin_ += 0.5 * yGrowth;
+    yMax_ -= 0.5 * yGrowth;
+}
+
+void Visualizer::zoomOut() {
+    double growth = (xMax_ - xMin_) * ZOOM_INCREMENT;
+    double yGrowth = (yMax_ - yMin_) * ZOOM_INCREMENT;
+    xMin_ -= 0.5 * growth;
+    xMax_ += 0.5 * growth;
+    yMin_ -= 0.5 * yGrowth;
+    yMax_ += 0.5 * yGrowth;
+}
+
+sf::Vector2f scaleMousePositionToAbsolute(int x, int y, sf::Vector2u windowSize) {
+    return {
+        static_cast<float>(x) * (static_cast<float>(ABSOLUTE_WINDOW_SIZE) / static_cast<float>
+        (windowSize.x)),
+        static_cast<float>(y) * (static_cast<float>(ABSOLUTE_WINDOW_SIZE) / static_cast<float>
+        (windowSize.y))
+    };
+}
+
 void Visualizer::render() {
-    sf::RenderWindow window(sf::VideoMode({DEFAULT_WINDOW_SIZE, DEFAULT_WINDOW_SIZE}), "Plotter2D");
+    sf::RenderWindow window(sf::VideoMode({ABSOLUTE_WINDOW_SIZE, ABSOLUTE_WINDOW_SIZE}),
+                            "Plotter2D");
     if (config.drawUi) {
-        initializeButtons({DEFAULT_WINDOW_SIZE, DEFAULT_WINDOW_SIZE});
+        initializeButtons({ABSOLUTE_WINDOW_SIZE, ABSOLUTE_WINDOW_SIZE});
     }
     while (window.isOpen()) {
         sf::Event event{};
@@ -296,35 +337,20 @@ void Visualizer::render() {
                 window.close();
             } else if (config.drawUi && event.type == sf::Event::MouseButtonPressed && event.
                        mouseButton.button == sf::Mouse::Left) {
-                sf::Vector2f mousePos(event.mouseButton.x, event.mouseButton.y);
-
-                if (isPointInButton(mousePos, this->zoomInButton)) {
-                    double xGrowth = (xMax_ - xMin_) * ZOOM_INCREMENT;
-                    double yGrowth = (yMax_ - yMin_) * ZOOM_INCREMENT;
-                    xMin_ += 0.5 * xGrowth;
-                    xMax_ -= 0.5 * xGrowth;
-                    yMin_ += 0.5 * yGrowth;
-                    yMax_ -= 0.5 * yGrowth;
-                }
-
-                if (isPointInButton(mousePos, this->zoomOutButton)) {
-                    double growth = (xMax_ - xMin_) * ZOOM_INCREMENT;
-                    double yGrowth = (yMax_ - yMin_) * ZOOM_INCREMENT;
-                    xMin_ -= 0.5 * growth;
-                    xMax_ += 0.5 * growth;
-                    yMin_ -= 0.5 * yGrowth;
-                    yMax_ += 0.5 * yGrowth;
-                }
-
-                if (isPointInButton(mousePos, this->panLeftButton)) {
+                const auto mousePos = scaleMousePositionToAbsolute(
+                    event.mouseButton.x, event.mouseButton.y, window.getSize());
+                std::cout << "Mouse Event received at: (" << event.mouseButton.x << ", " << event.
+                        mouseButton.y << "), scaled to (" << mousePos.x << ", " << mousePos.y <<
+                        ")\n";
+                if (isMouseInButton(mousePos, this->zoomInButton)) {
+                    zoomIn();
+                } else if (isMouseInButton(mousePos, this->zoomOutButton)) {
+                    zoomOut();
+                } else if (isMouseInButton(mousePos, this->panLeftButton)) {
                     panLeft();
-                }
-
-                if (isPointInButton(mousePos, this->panRightButton)) {
+                } else if (isMouseInButton(mousePos, this->panRightButton)) {
                     panRight();
-                }
-
-                if (isPointInButton(mousePos, this->rescaleButton)) {
+                } else if (isMouseInButton(mousePos, this->rescaleButton)) {
                     rescaleY_ = true;
                 }
             }
@@ -336,14 +362,14 @@ void Visualizer::render() {
         window.clear(sf::Color::White);
 
         if (config.drawAxes) {
-            auto grid = renderGrid({DEFAULT_WINDOW_SIZE, DEFAULT_WINDOW_SIZE});
+            auto grid = renderGrid({ABSOLUTE_WINDOW_SIZE, ABSOLUTE_WINDOW_SIZE});
             drawVertices(window, grid);
         }
         if (config.drawAxes) {
-            auto axes = renderAxes({DEFAULT_WINDOW_SIZE, DEFAULT_WINDOW_SIZE});
+            auto axes = renderAxes({ABSOLUTE_WINDOW_SIZE, ABSOLUTE_WINDOW_SIZE});
             drawVertices(window, axes);
         }
-        auto graph = renderGraph({DEFAULT_WINDOW_SIZE, DEFAULT_WINDOW_SIZE});
+        auto graph = renderGraph({ABSOLUTE_WINDOW_SIZE, ABSOLUTE_WINDOW_SIZE});
         drawGraph(window, graph);
         delete[] graph;
         if (config.drawUi) {

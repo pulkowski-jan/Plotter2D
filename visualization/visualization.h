@@ -38,7 +38,7 @@ class Visualizer {
     double yMax_;
     bool rescaleY_;
     bool useCustomPlotRange_;
-    mutable int validPointCount_;
+    mutable int validPointCount_{};
     std::pair<double, double> plotRange_;
 
     void initializeButtons(const sf::Vector2u& windowSize);
@@ -47,7 +47,7 @@ class Visualizer {
 
     void drawGraph(sf::RenderWindow& window, const sf::Vertex* lines) const;
 
-    static bool isPointInButton(const sf::Vector2f& point, const sf::RectangleShape& button);
+    static bool isMouseInButton(const sf::Vector2f& mousePosition, const sf::RectangleShape& button);
 
     sf::Vector2f scalePoint(const Point& p, const unsigned effectiveSize[2],
                             const unsigned offset[2]) const;
@@ -61,6 +61,8 @@ class Visualizer {
     std::vector<sf::Vertex> renderAxes(const sf::Vector2u& windowSize) const;
 
     void drawUI(sf::RenderWindow& window) const;
+
+    static bool doublesSignificantlyDiffer(double a, double b);
 
     bool shouldReevaluatePlotData() const;
 
@@ -79,7 +81,12 @@ class Visualizer {
         Visualizer(const Visualizer&) = delete;
 
         void render();
-        void drawVertices(sf::RenderWindow& window, std::vector<sf::Vertex> axes) const;
+
+        static void drawVertices(sf::RenderWindow& window, const std::vector<sf::Vertex>& axes);
+
+        void zoomIn();
+
+        void zoomOut();
 
 };
 
