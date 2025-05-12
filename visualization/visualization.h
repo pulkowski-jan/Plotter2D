@@ -35,7 +35,8 @@ class Visualizer {
         ZOOM_OUT,
         PAN_LEFT,
         PAN_RIGHT,
-        RESCALE
+        RESCALE,
+        DERIVATIVE
     };
 
     class Button {
@@ -100,6 +101,8 @@ class Visualizer {
         ~Visualizer();
 
         Visualizer& operator=(const Visualizer&) = delete;
+
+        void derivate();
 
         Visualizer(const Visualizer&) = delete;
 

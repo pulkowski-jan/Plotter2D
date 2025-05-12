@@ -2,21 +2,9 @@
 #include "parser/parsed_function.h"
 #include "visualization/visualization.h"
 
-class FunctionFromLambda final : public ParsedFunction {
-    std::function<double(double)> func_;
-
-    public:
-        explicit FunctionFromLambda(const std::function<double(double)>& func) : func_(func) { }
-
-        double operator()(const double x) const override {
-            return func_(x);
-        }
-
-};
-
 void plotter2d::plot(const std::function<double(double)>& func,
                      const std::pair<double, double>& domain, const Options& options) {
-    const FunctionFromLambda function(func);
+    const FunctionWrapper function(func);
     Visualizer visualizer({&function}, domain.first, domain.second, options);
     visualizer.render();
 }

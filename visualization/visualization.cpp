@@ -1,6 +1,7 @@
 #include "visualization.h"
 
 #include <iostream>
+#include <optional>
 #include <SFML/Graphics.hpp>
 #include <SFML/Window.hpp>
 
@@ -61,6 +62,10 @@ void Visualizer::initializeButtons(const sf::Vector2u& windowSize) {
     Button& panLeftButton = buttons[PAN_LEFT] = {};
     Button& panRightButton = buttons[PAN_RIGHT] = {};
     Button& rescaleButton = buttons[RESCALE] = {};
+    std::optional<Button*> derivativeButton = std::nullopt;
+    if (evaluator.parsedFunctions().size() == 1) {
+        derivativeButton = &(buttons[DERIVATIVE] = {});
+    }
     unsigned i = 0;
     zoomInButton.setAction([this] {
         zoomIn();
@@ -77,6 +82,11 @@ void Visualizer::initializeButtons(const sf::Vector2u& windowSize) {
     rescaleButton.setAction([this] {
         rescaleY_ = true;
     });
+    if (derivativeButton.has_value()) {
+        derivativeButton.value()->setAction([this] {
+            derivate();
+        });
+    }
     for (auto& entry : buttons) {
         auto& button = entry.second.rectangle();
         button.setSize(sf::Vector2f(BUTTON_WIDTH, BUTTON_HEIGHT));
@@ -93,6 +103,9 @@ void Visualizer::initializeButtons(const sf::Vector2u& windowSize) {
         panLeftButton.text().setString("<-");
         panRightButton.text().setString("->");
         rescaleButton.text().setString("-|-");
+        if (derivativeButton.has_value()) {
+            derivativeButton.value()->text().setString("d/dx");
+        }
 
         for (auto& entry : buttons) {
             auto& text = entry.second.text();
@@ -282,8 +295,8 @@ bool Visualizer::shouldReevaluatePlotData() const {
     }
     const Rectangle& domain = plotData->domain();
     const double xAnchor = domain.anchor().x();
-    return plotData->pointsCount() != pointsCount_ || doublesSignificantlyDiffer(xAnchor, xMin_) ||
-           doublesSignificantlyDiffer(xAnchor + domain.width(), xMax_);
+    return doublesSignificantlyDiffer(xAnchor, xMin_) || doublesSignificantlyDiffer(
+               xAnchor + domain.width(), xMax_);
 }
 
 void Visualizer::panLeft() {
@@ -347,6 +360,15 @@ void Visualizer::zoomOut() {
     xMax_ += 0.5 * growth;
     yMin_ -= 0.5 * yGrowth;
     yMax_ += 0.5 * yGrowth;
+}
+
+void Visualizer::derivate() {
+    std::vector<const ParsedFunction*>& parsedFunctions = evaluator.parsedFunctions();
+    const auto& lastDerivative = *parsedFunctions.back();
+    const ParsedFunction* derivative = evaluator.derivate(lastDerivative, xMin_, xMax_,
+                                                          pointsCount_);
+    parsedFunctions.push_back(derivative);
+    updatePlotData();
 }
 
 sf::Vector2f scaleMousePositionToAbsolute(int x, int y, sf::Vector2u windowSize) {

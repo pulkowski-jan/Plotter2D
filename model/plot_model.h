@@ -1,6 +1,9 @@
 #ifndef PLOT_INTERFACE_H
 #define PLOT_INTERFACE_H
+#include <functional>
 #include <string>
+
+#include "parser/parsed_function.h"
 
 using std::size_t;
 
@@ -68,6 +71,17 @@ class PlotData {
         const Point* points() const;
 
         size_t pointsCount() const;
+};
+
+
+class FunctionWrapper final : public ParsedFunction {
+    std::function<double(double)> func_;
+
+    public:
+        explicit FunctionWrapper(const std::function<double(double)>& func);
+
+        double operator()(const double x) const override;
+
 };
 
 
