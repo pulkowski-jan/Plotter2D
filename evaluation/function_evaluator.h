@@ -9,20 +9,9 @@
 
 
 class FunctionEvaluator {
-    const ParsedFunction* function;
+    std::vector<const ParsedFunction*> functions;
 
     public:
-        /**
-         * @brief Evaluates the function for pointsCount of points in the given domain
-         * @param fun The function to cache as evaluated
-         * @param xMin The left bound of the domain
-         * @param xMax The right bound of the domain
-         * @param pointsCount The number of points to evaluate
-         * @return Pointer to PlotData containing the results, or nullptr if xMin >= xMax
-         */
-        PlotData* evaluateGivenFunction(const ParsedFunction& fun, double xMin, double xMax,
-                                        unsigned pointsCount);
-
         /**
          * @brief Evaluates cached function for pointsCount of points in the given domain
          * @param xMin The left bound of the domain
@@ -32,11 +21,11 @@ class FunctionEvaluator {
          */
         PlotData* evaluate(double xMin, double xMax, unsigned pointsCount) const;
 
-        explicit FunctionEvaluator(const ParsedFunction& function);
+        explicit FunctionEvaluator(std::vector<const ParsedFunction*>& functions);
 
-        const ParsedFunction& parsedFunction() const;
+        const std::vector<const ParsedFunction*>& parsedFunctions() const;
 
-        void setFunction(const ParsedFunction& fun);
+        void setFunctions(const std::vector<const ParsedFunction*>& functions);
 };
 
 
