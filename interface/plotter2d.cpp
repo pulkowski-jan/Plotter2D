@@ -21,6 +21,24 @@ void plotter2d::plot(const std::function<double(double)>& func,
     visualizer.render();
 }
 
+void plotter2d::plot(const std::vector<std::function<double(double)>>& funcs,
+                     const std::pair<double, double>& domain, const Options& options) {
+    std::vector<const ParsedFunction*> functions;
+    std::vector<FunctionFromLambda> functionObjects;
+
+    for (const auto& func : funcs) {
+        functionObjects.emplace_back(func);
+    }
+
+    for (const auto& func : functionObjects) {
+        functions.push_back(&func);
+    }
+
+    Visualizer visualizer(functions, domain.first, domain.second, options);
+    visualizer.render();
+}
+
+
 void plotter2d::plotFromPolishNotation(const std::string& polishNotation,
                                        const std::pair<double, double>& domain,
                                        const Options& options) {
@@ -30,6 +48,27 @@ void plotter2d::plotFromPolishNotation(const std::string& polishNotation,
     visualizer.render();
     delete parsedFunction;
 }
+
+void plotter2d::plotFromPolishNotation(const std::vector<std::string>& polishNotations,
+                                      const std::pair<double, double>& domain,
+                                      const Options& options) {
+    FunctionParser parser;
+    std::vector<const ParsedFunction*> parsedFunctions;
+
+    for (const auto& notation : polishNotations) {
+        const ParsedFunction* parsedFunction = parser.parsePolishNotation(notation);
+        parsedFunctions.push_back(parsedFunction);
+    }
+
+    Visualizer visualizer(parsedFunctions, domain.first, domain.second, options);
+    visualizer.render();
+
+    for (const auto* func : parsedFunctions) {
+        delete func;
+    }
+}
+
+
 
 plotter2d::Options::Options(): drawUi(true), drawAxes(true), drawGrid(true),
                                approximationMode(Points), resolution(5000), plotRange({}),

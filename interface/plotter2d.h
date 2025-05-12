@@ -62,9 +62,17 @@ namespace plotter2d {
     void plot(const std::function<double(double)>& func, const std::pair<double, double>& domain,
               const Options& options = Options());
 
+    void plot(const std::vector<std::function<double(double)>>& funcs,
+                     const std::pair<double, double>& domain, const Options& options = Options());
+
+
     void plotFromPolishNotation(const std::string& polishNotation,
                                 const std::pair<double, double>& domain,
                                 const Options& options = Options());
+
+    void plotter2d::plotFromPolishNotation(const std::vector<std::string>& polishNotations,
+                                      const std::pair<double, double>& domain,
+                                      const Options& options = Options());
 }
 
 #endif //PLOTTER2D_H
