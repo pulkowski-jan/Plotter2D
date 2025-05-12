@@ -1,6 +1,7 @@
 #include "visualization.h"
 
 #include <iostream>
+#include <optional>
 #include <SFML/Graphics.hpp>
 #include <SFML/Window.hpp>
 
@@ -24,39 +25,98 @@ Visualizer::Visualizer(std::vector<const ParsedFunction*> functions, const doubl
     }
 }
 
+Visualizer::Button::~Button() {
+    delete action_;
+}
+
+Visualizer::Button::Button(): rectangle_({sf::Vector2f(0.f, 0.f)}), text_({}) { }
+
+Visualizer::Button::Button(const sf::RectangleShape& rectangle,
+                           const sf::Text& text): rectangle_(rectangle), text_(text) { }
+
+sf::RectangleShape& Visualizer::Button::rectangle() {
+    return rectangle_;
+}
+
+const sf::RectangleShape& Visualizer::Button::rectangle() const {
+    return rectangle_;
+}
+
+sf::Text& Visualizer::Button::text() {
+    return text_;
+}
+
+void Visualizer::Button::setAction(std::function<void()> action) {
+    action_ = new std::function(action);
+}
+
+void Visualizer::Button::trigger() const {
+    if (action_) {
+        (*action_)();
+    }
+}
+
 void Visualizer::initializeButtons(const sf::Vector2u& windowSize) {
-    constexpr unsigned BUTTONS_COUNT = 5;
-    sf::RectangleShape* buttons[BUTTONS_COUNT] = {
-        &zoomInButton, &zoomOutButton, &panLeftButton, &panRightButton, &rescaleButton
-    };
-    for (int i = 0; i < BUTTONS_COUNT; ++i) {
-        buttons[i]->setSize(sf::Vector2f(BUTTON_WIDTH, BUTTON_HEIGHT));
-        buttons[i]->setPosition(windowSize.x - BUTTON_WIDTH - BUTTON_PADDING,
-                                i * (BUTTON_HEIGHT + BUTTON_PADDING) + BUTTON_PADDING);
-        buttons[i]->setFillColor(sf::Color(200, 200, 200));
-        buttons[i]->setOutlineThickness(2);
-        buttons[i]->setOutlineColor(sf::Color::Black);
+    Button& zoomInButton = buttons[ZOOM_IN] = {};
+    Button& zoomOutButton = buttons[ZOOM_OUT] = {};
+    Button& panLeftButton = buttons[PAN_LEFT] = {};
+    Button& panRightButton = buttons[PAN_RIGHT] = {};
+    Button& rescaleButton = buttons[RESCALE] = {};
+    std::optional<Button*> derivativeButton = std::nullopt;
+    if (evaluator.parsedFunctions().size() == 1 && config.approximationMode ==
+        plotter2d::Options::POINTS) {
+        derivativeButton = &(buttons[DERIVATIVE] = {});
+    }
+    unsigned i = 0;
+    zoomInButton.setAction([this] {
+        zoomIn();
+    });
+    zoomOutButton.setAction([this] {
+        zoomOut();
+    });
+    panLeftButton.setAction([this] {
+        panLeft();
+    });
+    panRightButton.setAction([this] {
+        panRight();
+    });
+    rescaleButton.setAction([this] {
+        rescaleY_ = true;
+    });
+    if (derivativeButton) {
+        (*derivativeButton)->setAction([this] {
+            derivate();
+        });
+    }
+    for (auto& entry : buttons) {
+        auto& button = entry.second.rectangle();
+        button.setSize(sf::Vector2f(BUTTON_WIDTH, BUTTON_HEIGHT));
+        button.setPosition(windowSize.x - BUTTON_WIDTH - BUTTON_PADDING,
+                           i++ * (BUTTON_HEIGHT + BUTTON_PADDING) + BUTTON_PADDING);
+        button.setFillColor(sf::Color(200, 200, 200));
+        button.setOutlineThickness(2);
+        button.setOutlineColor(sf::Color::Black);
     }
 
     if (!font.getInfo().family.empty()) {
-        zoomInText.setString("+");
-        zoomOutText.setString("-");
-        panLeftText.setString("<-");
-        panRightText.setString("->");
-        rescaleText.setString("-|-");
+        zoomInButton.text().setString("+");
+        zoomOutButton.text().setString("-");
+        panLeftButton.text().setString("<-");
+        panRightButton.text().setString("->");
+        rescaleButton.text().setString("-|-");
+        if (derivativeButton) {
+            (*derivativeButton)->text().setString("d/dx");
+        }
 
-        sf::Text* texts[BUTTONS_COUNT] = {
-            &zoomInText, &zoomOutText, &panLeftText, &panRightText, &rescaleText
-        };
-
-        for (int i = 0; i < BUTTONS_COUNT; ++i) {
-            texts[i]->setFont(font);
-            texts[i]->setCharacterSize(24);
-            texts[i]->setFillColor(sf::Color::Black);
-            texts[i]->setPosition(
-                buttons[i]->getPosition().x + (BUTTON_WIDTH - texts[i]->getLocalBounds().width) / 2,
-                buttons[i]->getPosition().y + (BUTTON_HEIGHT - texts[i]->getLocalBounds().height) /
-                2 - 5);
+        for (auto& entry : buttons) {
+            auto& text = entry.second.text();
+            auto& button = entry.second.rectangle();
+            text.setFont(font);
+            text.setCharacterSize(24);
+            text.setFillColor(sf::Color::Black);
+            text.setPosition(
+                button.getPosition().x + (BUTTON_WIDTH - text.getLocalBounds().width) / 2,
+                button.getPosition().y + (BUTTON_HEIGHT - text.getLocalBounds().height) / 2 - 5);
         }
     }
 }
@@ -217,25 +277,17 @@ std::vector<sf::Vertex> Visualizer::renderAxes(const sf::Vector2u& windowSize) c
     return result;
 }
 
-void Visualizer::drawUI(sf::RenderWindow& window) const {
-    window.draw(zoomInButton);
-    window.draw(zoomOutButton);
-
-    window.draw(panLeftButton);
-    window.draw(panRightButton);
-    window.draw(rescaleButton);
-
-    if (!font.getInfo().family.empty()) {
-        window.draw(zoomInText);
-        window.draw(zoomOutText);
-        window.draw(panLeftText);
-        window.draw(panRightText);
-        window.draw(rescaleText);
+void Visualizer::drawUI(sf::RenderWindow& window) {
+    for (auto& entry : buttons) {
+        window.draw(entry.second.rectangle());
+        if (!font.getInfo().family.empty()) {
+            window.draw(entry.second.text());
+        }
     }
 }
 
 bool Visualizer::doublesSignificantlyDiffer(const double a, const double b) {
-    return (a - b) >= 1e-14;
+    return std::abs(a - b) >= 1e-14;
 }
 
 bool Visualizer::shouldReevaluatePlotData() const {
@@ -244,8 +296,8 @@ bool Visualizer::shouldReevaluatePlotData() const {
     }
     const Rectangle& domain = plotData->domain();
     const double xAnchor = domain.anchor().x();
-    return plotData->pointsCount() != pointsCount_ || doublesSignificantlyDiffer(xAnchor, xMin_) ||
-           doublesSignificantlyDiffer(xAnchor + domain.width(), xMax_);
+    return doublesSignificantlyDiffer(xAnchor, xMin_) || doublesSignificantlyDiffer(
+               xAnchor + domain.width(), xMax_);
 }
 
 void Visualizer::panLeft() {
@@ -284,7 +336,7 @@ void Visualizer::updatePlotData() {
 }
 
 void Visualizer::drawGraph(sf::RenderWindow& window, const sf::Vertex* lines) const {
-    window.draw(lines, validPointCount_, config.approximationMode == plotter2d::Options::Points
+    window.draw(lines, validPointCount_, config.approximationMode == plotter2d::Options::POINTS
                                              ? sf::Points
                                              : sf::LineStrip);
 }
@@ -309,6 +361,15 @@ void Visualizer::zoomOut() {
     xMax_ += 0.5 * growth;
     yMin_ -= 0.5 * yGrowth;
     yMax_ += 0.5 * yGrowth;
+}
+
+void Visualizer::derivate() {
+    std::vector<const ParsedFunction*>& parsedFunctions = evaluator.parsedFunctions();
+    const auto& lastDerivative = *parsedFunctions.back();
+    const ParsedFunction* derivative = evaluator.derivate(lastDerivative, xMin_, xMax_,
+                                                          pointsCount_);
+    parsedFunctions.push_back(derivative);
+    updatePlotData();
 }
 
 sf::Vector2f scaleMousePositionToAbsolute(int x, int y, sf::Vector2u windowSize) {
@@ -338,16 +399,15 @@ void Visualizer::render() {
                 std::cout << "Mouse Event received at: (" << event.mouseButton.x << ", " << event.
                         mouseButton.y << "), scaled to (" << mousePos.x << ", " << mousePos.y <<
                         ")\n";
-                if (isMouseInButton(mousePos, this->zoomInButton)) {
-                    zoomIn();
-                } else if (isMouseInButton(mousePos, this->zoomOutButton)) {
-                    zoomOut();
-                } else if (isMouseInButton(mousePos, this->panLeftButton)) {
-                    panLeft();
-                } else if (isMouseInButton(mousePos, this->panRightButton)) {
-                    panRight();
-                } else if (isMouseInButton(mousePos, this->rescaleButton)) {
-                    rescaleY_ = true;
+
+                auto triggered = std::find_if(buttons.cbegin(), buttons.cend(),
+                                              [&mousePos](auto& entry) {
+                                                  return isMouseInButton(
+                                                      mousePos, entry.second.rectangle());
+                                              });
+                if (triggered != buttons.cend()) {
+                    std::cout << "Button " << triggered->first << " triggered\n";
+                    triggered->second.trigger();
                 }
             }
         }

@@ -25,7 +25,12 @@ class FunctionEvaluator {
 
         const std::vector<const ParsedFunction*>& parsedFunctions() const;
 
+        std::vector<const ParsedFunction*>& parsedFunctions();
+
         void setFunctions(const std::vector<const ParsedFunction*>& functions);
+
+        ParsedFunction* derivate(const ParsedFunction& function, double xMin, double xMax,
+                                 unsigned pointsCount);
 };
 
 

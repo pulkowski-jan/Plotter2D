@@ -2,21 +2,9 @@
 #include "parser/parsed_function.h"
 #include "visualization/visualization.h"
 
-class FunctionFromLambda final : public ParsedFunction {
-    std::function<double(double)> func_;
-
-    public:
-        explicit FunctionFromLambda(const std::function<double(double)>& func) : func_(func) { }
-
-        double operator()(const double x) const override {
-            return func_(x);
-        }
-
-};
-
 void plotter2d::plot(const std::function<double(double)>& func,
                      const std::pair<double, double>& domain, const Options& options) {
-    const FunctionFromLambda function(func);
+    const FunctionWrapper function(func);
     Visualizer visualizer({&function}, domain.first, domain.second, options);
     visualizer.render();
 }
@@ -24,7 +12,7 @@ void plotter2d::plot(const std::function<double(double)>& func,
 void plotter2d::plot(const std::vector<std::function<double(double)>>& funcs,
                      const std::pair<double, double>& domain, const Options& options) {
     std::vector<const ParsedFunction*> functions;
-    std::vector<FunctionFromLambda> functionObjects;
+    std::vector<FunctionWrapper> functionObjects;
 
     for (const auto& func : funcs) {
         functionObjects.emplace_back(func);
@@ -71,7 +59,7 @@ void plotter2d::plotFromPolishNotation(const std::vector<std::string>& polishNot
 
 
 plotter2d::Options::Options(): drawUi(true), drawAxes(true), drawGrid(true),
-                               approximationMode(Points), resolution(5000), plotRange({}),
+                               approximationMode(POINTS), resolution(5000), plotRange({}),
                                useCustomPlotRange(false), graphColor(0x000000FF) { }
 
 plotter2d::Options::Options(const bool drawUi, const bool drawAxes, const bool drawGrid,

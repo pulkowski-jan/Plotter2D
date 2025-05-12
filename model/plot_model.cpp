@@ -60,3 +60,9 @@ const Point* PlotData::points() const {
 size_t PlotData::pointsCount() const {
     return pointsCount_;
 }
+
+FunctionWrapper::FunctionWrapper(const std::function<double(double)>& func): func_(func) { }
+
+double FunctionWrapper::operator()(const double x) const {
+    return func_(x);
+}

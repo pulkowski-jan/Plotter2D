@@ -13,7 +13,7 @@ int main() {
                     plotter2d::OptionsBuilder().resolution(5000).plotRange(std::make_pair(-10, 10)).
                     graphColor(0x0000ffff).build());
     plotter2d::plot(f, domain,
-                    plotter2d::OptionsBuilder().approximationMode(plotter2d::Options::Lines).
+                    plotter2d::OptionsBuilder().approximationMode(plotter2d::Options::LINES).
                     drawAxes(false).
                     resolution(20).graphColor(0xFF0000FF).build());
     plotter2d::plotFromPolishNotation("* - x / 1 2 * - x 2 * - x 3 * - x 4 - x 5",
