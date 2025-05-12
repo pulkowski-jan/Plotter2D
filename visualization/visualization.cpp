@@ -63,7 +63,8 @@ void Visualizer::initializeButtons(const sf::Vector2u& windowSize) {
     Button& panRightButton = buttons[PAN_RIGHT] = {};
     Button& rescaleButton = buttons[RESCALE] = {};
     std::optional<Button*> derivativeButton = std::nullopt;
-    if (evaluator.parsedFunctions().size() == 1) {
+    if (evaluator.parsedFunctions().size() == 1 && config.approximationMode ==
+        plotter2d::Options::POINTS) {
         derivativeButton = &(buttons[DERIVATIVE] = {});
     }
     unsigned i = 0;
@@ -335,7 +336,7 @@ void Visualizer::updatePlotData() {
 }
 
 void Visualizer::drawGraph(sf::RenderWindow& window, const sf::Vertex* lines) const {
-    window.draw(lines, validPointCount_, config.approximationMode == plotter2d::Options::Points
+    window.draw(lines, validPointCount_, config.approximationMode == plotter2d::Options::POINTS
                                              ? sf::Points
                                              : sf::LineStrip);
 }

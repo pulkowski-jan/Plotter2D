@@ -8,7 +8,7 @@
 namespace plotter2d {
     struct Options {
         enum ApproximationMode {
-            Lines, Points
+            LINES, POINTS
         };
 
         bool drawUi;
@@ -30,7 +30,7 @@ namespace plotter2d {
 
     class OptionsBuilder {
         bool drawUi_ = true;
-        Options::ApproximationMode approximationMode_ = Options::Points;
+        Options::ApproximationMode approximationMode_ = Options::POINTS;
         unsigned resolution_ = 5000;
         bool drawAxes_ = true;
         bool drawGrid_ = true;
@@ -70,9 +70,8 @@ namespace plotter2d {
                                 const std::pair<double, double>& domain,
                                 const Options& options = Options());
 
-    void plotter2d::plotFromPolishNotation(const std::vector<std::string>& polishNotations,
-                                      const std::pair<double, double>& domain,
-                                      const Options& options = Options());
+    void plotFromPolishNotation(const std::vector<std::string>& polishNotations, const std::pair<double, double>& domain,
+                                const Options& options = Options());
 }
 
 #endif //PLOTTER2D_H
