@@ -16,19 +16,6 @@ class Visualizer {
     double zoomFactor;
     Point zoomCenter;
 
-    sf::RectangleShape zoomInButton{};
-    sf::RectangleShape zoomOutButton{};
-    sf::Text zoomInText{};
-    sf::Text zoomOutText{};
-
-    sf::RectangleShape panLeftButton{};
-    sf::RectangleShape panRightButton{};
-    sf::Text panLeftText{};
-    sf::Text panRightText{};
-
-    sf::RectangleShape rescaleButton{};
-    sf::Text rescaleText{};
-
     sf::Font font{};
     double xMin_;
     double xMax_;
@@ -40,6 +27,41 @@ class Visualizer {
     bool useCustomPlotRange_;
     mutable int validPointCount_{};
     std::pair<double, double> plotRange_;
+    /*
+     * BUTTONS
+     */
+    enum ButtonType {
+        ZOOM_IN,
+        ZOOM_OUT,
+        PAN_LEFT,
+        PAN_RIGHT,
+        RESCALE
+    };
+
+    class Button {
+        sf::RectangleShape rectangle_;
+        sf::Text text_;
+        const std::function<void()>* action_ = nullptr;
+
+        public:
+            ~Button();
+
+            Button();
+
+            Button(const sf::RectangleShape& rectangle, const sf::Text& text);
+
+            sf::RectangleShape& rectangle();
+
+            const sf::RectangleShape& rectangle() const;
+
+            sf::Text& text();
+
+            void setAction(std::function<void()> action);
+
+            void trigger() const;
+    };
+
+    std::map<ButtonType, Button> buttons{};
 
     void initializeButtons(const sf::Vector2u& windowSize);
 
@@ -61,7 +83,7 @@ class Visualizer {
 
     std::vector<sf::Vertex> renderAxes(const sf::Vector2u& windowSize) const;
 
-    void drawUI(sf::RenderWindow& window) const;
+    void drawUI(sf::RenderWindow& window);
 
     static bool doublesSignificantlyDiffer(double a, double b);
 
