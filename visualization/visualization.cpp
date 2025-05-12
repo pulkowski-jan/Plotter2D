@@ -82,8 +82,8 @@ void Visualizer::initializeButtons(const sf::Vector2u& windowSize) {
     rescaleButton.setAction([this] {
         rescaleY_ = true;
     });
-    if (derivativeButton.has_value()) {
-        derivativeButton.value()->setAction([this] {
+    if (derivativeButton) {
+        (*derivativeButton)->setAction([this] {
             derivate();
         });
     }
@@ -103,8 +103,8 @@ void Visualizer::initializeButtons(const sf::Vector2u& windowSize) {
         panLeftButton.text().setString("<-");
         panRightButton.text().setString("->");
         rescaleButton.text().setString("-|-");
-        if (derivativeButton.has_value()) {
-            derivativeButton.value()->text().setString("d/dx");
+        if (derivativeButton) {
+            (*derivativeButton)->text().setString("d/dx");
         }
 
         for (auto& entry : buttons) {
