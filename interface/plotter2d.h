@@ -70,7 +70,8 @@ namespace plotter2d {
                                 const std::pair<double, double>& domain,
                                 const Options& options = Options());
 
-    void plotFromPolishNotation(const std::vector<std::string>& polishNotations, const std::pair<double, double>& domain,
+    void plotFromPolishNotation(const std::vector<std::string>& polishNotations,
+                                const std::pair<double, double>& domain,
                                 const Options& options = Options());
 }
 
