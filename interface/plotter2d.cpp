@@ -17,7 +17,7 @@ class FunctionFromLambda final : public ParsedFunction {
 void plotter2d::plot(const std::function<double(double)>& func,
                      const std::pair<double, double>& domain, const Options& options) {
     const FunctionFromLambda function(func);
-    Visualizer visualizer(&function, domain.first, domain.second, options);
+    Visualizer visualizer({&function}, domain.first, domain.second, options);
     visualizer.render();
 }
 
@@ -26,14 +26,14 @@ void plotter2d::plotFromPolishNotation(const std::string& polishNotation,
                                        const Options& options) {
     FunctionParser parser;
     const ParsedFunction* parsedFunction = parser.parsePolishNotation(polishNotation);
-    Visualizer visualizer(parsedFunction, domain.first, domain.second, options);
+    Visualizer visualizer({parsedFunction}, domain.first, domain.second, options);
     visualizer.render();
     delete parsedFunction;
 }
 
 plotter2d::Options::Options(): drawUi(true), drawAxes(true), drawGrid(true),
-                               approximationMode(Points), resolution(5000),
-                               useCustomPlotRange(false), plotRange({}), graphColor(0x000000FF) { }
+                               approximationMode(Points), resolution(5000), plotRange({}),
+                               useCustomPlotRange(false), graphColor(0x000000FF) { }
 
 plotter2d::Options::Options(const bool drawUi, const bool drawAxes, const bool drawGrid,
                             const ApproximationMode approximationMode, const unsigned resolution,

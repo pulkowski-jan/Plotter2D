@@ -72,7 +72,7 @@ class Visualizer {
     void panRight();
 
     public:
-        explicit Visualizer(const ParsedFunction* function, double xMin, double xMax,
+        explicit Visualizer(std::vector<const ParsedFunction*> functions, double xMin, double xMax,
                             const plotter2d::Options& options);
 
         ~Visualizer();

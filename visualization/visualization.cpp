@@ -13,16 +13,12 @@ static constexpr unsigned BUTTON_PADDING = 10;
 static constexpr double PAN_FACTOR = 0.15;
 static constexpr unsigned GRID_SIZE = 10;
 
-Visualizer::Visualizer(const ParsedFunction* function, const double xMin, const double xMax,
-                       const plotter2d::Options& options) : config(options), evaluator(*function),
-                                                            plotData(nullptr), zoomFactor(1.0),
-                                                            xMin_(xMin), xMax_(xMax),
-                                                            pointsCount_(options.resolution),
-                                                            yMin_(0), yMax_(0), rescaleY_(true),
-                                                            useCustomPlotRange_(
-                                                                options.useCustomPlotRange),
-                                                            validPointCount_(0),
-                                                            plotRange_(options.plotRange) {
+Visualizer::Visualizer(std::vector<const ParsedFunction*> functions, const double xMin,
+                       const double xMax, const plotter2d::Options& options) : config(options),
+    evaluator(functions), plotData(nullptr), zoomFactor(1.0), xMin_(xMin), xMax_(xMax),
+    pointsCount_(options.resolution), yMin_(0), yMax_(0), rescaleY_(true),
+    useCustomPlotRange_(options.useCustomPlotRange), validPointCount_(0),
+    plotRange_(options.plotRange) {
     if (!font.loadFromFile("lato.ttf")) {
         std::cerr << "Warning: Failed to load font for buttons" << std::endl;
     }
