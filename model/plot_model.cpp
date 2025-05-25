@@ -38,11 +38,9 @@ const Point& Rectangle::anchor() const {
     return anchor_;
 }
 
-PlotData::PlotData(const Rectangle& r, Point* points, const size_t pointsCount)
-    : domain_(r), points_(points), pointsCount_(pointsCount) {
-    std::sort(points_, points_ + pointsCount, [](const auto& a, const auto& b) {
-        return a.x() < b.x();
-    });
+PlotData::PlotData(const Rectangle& r, const Point* points, const size_t pointsCount)
+    : domain_(r), points_(new Point[pointsCount]), pointsCount_(pointsCount) {
+    std::memcpy(points_, points, sizeof(Point) * pointsCount);
 }
 
 PlotData::~PlotData() {

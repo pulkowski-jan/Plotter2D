@@ -58,7 +58,7 @@ class PlotData {
     size_t pointsCount_;
 
     public:
-        PlotData(const Rectangle&, Point*, size_t);
+        PlotData(const Rectangle&, const Point*, size_t);
 
         PlotData(const PlotData&) = delete;
 
@@ -80,7 +80,7 @@ class FunctionWrapper final : public ParsedFunction {
     public:
         explicit FunctionWrapper(const std::function<double(double)>& func);
 
-        double operator()(const double x) const override;
+        double operator()(double x) const override;
 
 };
 
