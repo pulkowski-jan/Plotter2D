@@ -2,7 +2,6 @@
 #define PLOTTER2D_H
 #include <functional>
 #include <string>
-#include <cmath>
 
 
 namespace plotter2d {
@@ -16,15 +15,17 @@ namespace plotter2d {
         bool drawGrid;
         ApproximationMode approximationMode;
         unsigned resolution;
-        std::pair<double,double> plotRange;
+        std::pair<double, double> plotRange;
         bool useCustomPlotRange;
         unsigned graphColor;
+        bool cachingEnabled;
 
         Options();
 
         Options(bool drawUi, bool drawAxes, bool drawGrid, ApproximationMode approximationMode,
                 unsigned resolution, bool useCustomPlotRange,
-                const std::pair<double, double>& plotRange, unsigned graphColor);
+                const std::pair<double, double>& plotRange, unsigned graphColor,
+                bool cachingEnabled);
 
     };
 
@@ -37,6 +38,7 @@ namespace plotter2d {
         unsigned graphColor_ = 0x000000FF;
         std::pair<double, double> plotRange_{};
         bool useCustomPlotRange_ = false;
+        bool cachingEnabled_ = true;
 
         public:
             OptionsBuilder& drawUi(bool value);
@@ -55,6 +57,8 @@ namespace plotter2d {
 
             OptionsBuilder& useCustomPlotRange(bool value);
 
+            OptionsBuilder& cachingEnabled(bool value);
+
             Options build() const;
     };
 
@@ -62,8 +66,8 @@ namespace plotter2d {
     void plot(const std::function<double(double)>& func, const std::pair<double, double>& domain,
               const Options& options = Options());
 
-    void plot(const std::vector<std::function<double(double)>>& funcs,
-                     const std::pair<double, double>& domain, const Options& options = Options());
+    void plot(const std::vector<std::function<double(double)> >& funcs,
+              const std::pair<double, double>& domain, const Options& options = Options());
 
 
     void plotFromPolishNotation(const std::string& polishNotation,
