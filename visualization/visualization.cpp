@@ -84,7 +84,7 @@ void Visualizer::initializeButtons(const sf::Vector2u& windowSize) {
     });
     if (derivativeButton) {
         (*derivativeButton)->setAction([this] {
-            derivate();
+            addDerivative();
         });
     }
     for (auto& entry : buttons) {
@@ -360,10 +360,10 @@ void Visualizer::zoomOut() {
     yMax_ += 0.5 * yGrowth;
 }
 
-void Visualizer::derivate() {
-    const auto& lastDerivative = *evaluator.parsedFunctions().back();
+void Visualizer::addDerivative() {
     evaluator.pushFunction(
-        FunctionEvaluator::computeDerivative(lastDerivative, xMin_, xMax_, pointsCount_));
+        FunctionEvaluator::computeDerivative(evaluator.parsedFunctions().back(),
+                                             (xMin_ - xMax_) / pointsCount_));
     updatePlotData();
 }
 

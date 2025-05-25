@@ -102,8 +102,6 @@ class Visualizer {
 
         Visualizer& operator=(const Visualizer&) = delete;
 
-        void derivate();
-
         Visualizer(const Visualizer&) = delete;
 
         void render();
@@ -113,6 +111,8 @@ class Visualizer {
         void zoomIn();
 
         void zoomOut();
+
+        void addDerivative();
 
 };
 

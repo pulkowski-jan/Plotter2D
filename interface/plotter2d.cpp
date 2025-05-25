@@ -9,21 +9,21 @@ void plotter2d::plot(const std::function<double(double)>& func,
     visualizer.render();
 }
 
-void plotter2d::plot(const std::vector<std::function<double(double)>>& funcs,
+void plotter2d::plot(const std::vector<std::function<double(double)> >& funcs,
                      const std::pair<double, double>& domain, const Options& options) {
     std::vector<const ParsedFunction*> functions;
-    std::vector<FunctionWrapper> functionObjects;
 
-    for (const auto& func : funcs) {
-        functionObjects.emplace_back(func);
-    }
-
-    for (const auto& func : functionObjects) {
-        functions.push_back(&func);
-    }
+    functions.reserve(funcs.size());
+    std::transform(funcs.begin(), funcs.end(), std::back_inserter(functions),
+                   [](const std::function<double(double)>& func) {
+                       return new FunctionWrapper(func);
+                   });
 
     Visualizer visualizer(functions, domain.first, domain.second, options);
     visualizer.render();
+    for (const ParsedFunction* function : functions) {
+        delete function;
+    }
 }
 
 
@@ -38,8 +38,8 @@ void plotter2d::plotFromPolishNotation(const std::string& polishNotation,
 }
 
 void plotter2d::plotFromPolishNotation(const std::vector<std::string>& polishNotations,
-                                      const std::pair<double, double>& domain,
-                                      const Options& options) {
+                                       const std::pair<double, double>& domain,
+                                       const Options& options) {
     FunctionParser parser;
     std::vector<const ParsedFunction*> parsedFunctions;
 
@@ -57,22 +57,23 @@ void plotter2d::plotFromPolishNotation(const std::vector<std::string>& polishNot
 }
 
 
-
 plotter2d::Options::Options(): drawUi(true), drawAxes(true), drawGrid(true),
                                approximationMode(POINTS), resolution(5000), plotRange({}),
-                               useCustomPlotRange(false), graphColor(0x000000FF) { }
+                               useCustomPlotRange(false), graphColor(0x000000FF),
+                               cachingEnabled(true) { }
 
 plotter2d::Options::Options(const bool drawUi, const bool drawAxes, const bool drawGrid,
                             const ApproximationMode approximationMode, const unsigned resolution,
                             const bool useCustomPlotRange,
-                            const std::pair<double, double>& plotRange,
-                            const unsigned graphColor) : drawUi(drawUi), drawAxes(drawAxes),
+                            const std::pair<double, double>& plotRange, const unsigned graphColor,
+                            const bool cachingEnabled) : drawUi(drawUi), drawAxes(drawAxes),
                                                          drawGrid(drawGrid),
                                                          approximationMode(approximationMode),
                                                          resolution(resolution),
                                                          plotRange(plotRange),
                                                          useCustomPlotRange(useCustomPlotRange),
-                                                         graphColor(graphColor) { }
+                                                         graphColor(graphColor),
+                                                         cachingEnabled(cachingEnabled) { }
 
 plotter2d::OptionsBuilder& plotter2d::OptionsBuilder::drawUi(const bool value) {
     drawUi_ = value;
@@ -120,6 +121,11 @@ plotter2d::OptionsBuilder& plotter2d::OptionsBuilder::useCustomPlotRange(bool va
     return *this;
 }
 
+plotter2d::OptionsBuilder& plotter2d::OptionsBuilder::cachingEnabled(bool value) {
+    cachingEnabled_ = value;
+    return *this;
+}
+
 plotter2d::Options plotter2d::OptionsBuilder::build() const {
     bool customPlotRange = useCustomPlotRange_;
     if (useCustomPlotRange_ && plotRange_ == std::pair<double, double>()) {
@@ -127,6 +133,6 @@ plotter2d::Options plotter2d::OptionsBuilder::build() const {
     }
     return {
         drawUi_, drawAxes_, drawGrid_, approximationMode_, resolution_, customPlotRange, plotRange_,
-        graphColor_
+        graphColor_, cachingEnabled_
     };
 }

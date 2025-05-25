@@ -7,26 +7,103 @@
 #include <thread>
 
 static constexpr unsigned BUFFER_SIZE_COEFFICIENT = 2;
+static constexpr double MIN_CACHE_REEVALUATION_MARGIN = 0.1;
+
+FunctionEvaluator::FunctionEvaluator(const std::vector<const ParsedFunction*>& functions,
+                                     const bool cachingEnabled): functions(functions),
+                                                                 cachingEnabled(cachingEnabled) { }
 
 const std::vector<const ParsedFunction*>& FunctionEvaluator::parsedFunctions() const {
     return functions;
 }
 
-const std::vector<const ParsedFunction*>& FunctionEvaluator::parsedFunctions() {
-    return functions;
+PlotData* FunctionEvaluator::evaluate(const double xMin, const double xMax,
+                                      const unsigned pointsCount) {
+    if (xMin >= xMax) {
+        return nullptr;
+    }
+    semaphore.lock();
+    if (pointsCount != pointsPerFunction || outOfBounds(xMin, xMax) || rangeSmaller(xMin, xMax)) {
+        if (pointsCount != pointsPerFunction) {
+            delete buffer;
+            pointsPerFunction = pointsCount;
+            buffer = new Point[bufferSize()];
+        }
+        calculateFunctionPoints(xMin, xMax, pointsPerFunction);
+        std::cout << std::flush;
+    }
+    const Point* windowStart = std::lower_bound(buffer, buffer + bufferSize(), xMin,
+                                                [](const Point& p, const double x) {
+                                                    return p.x() < x;
+                                                });
+    const Point* windowEnd = std::upper_bound(buffer, buffer + bufferSize(), xMax,
+                                              [](const double x, const Point& p) {
+                                                  return x < p.x();
+                                              });
+    auto* plotData = new PlotData(calculateBounds(windowStart, windowEnd), windowStart,
+                                  windowEnd - windowStart);
+    semaphore.unlock();
+    if (cachingEnabled && (closeToBufferStart(windowStart) || closeToBufferEnd(windowEnd))) {
+        std::thread backgroundThread([this, xMin, xMax] {
+            std::lock_guard lock(semaphore);
+            std::cout << "background ";
+            calculateFunctionPoints(xMin, xMax, pointsPerFunction);
+            std::cout << "fin" << std::endl;
+        });
+        backgroundThread.detach();
+    }
+    return plotData;
 }
 
-void FunctionEvaluator::setFunctions(const std::vector<const ParsedFunction*>& functions) {
-    this->functions = functions;
+void FunctionEvaluator::pushFunction(const ParsedFunction* derivative) {
+    std::lock_guard lock(semaphore);
+    const double xMin = buffer->x();
+    const double xMax = buffer[bufferSize() - 1].x();
+    auto* newBuffer = new Point[bufferSize() + bufferSizeCoefficient() * pointsPerFunction];
+    std::copy_n(buffer, bufferSize(), newBuffer);
+    delete buffer;
+    buffer = newBuffer;
+    auto bufferCursor = buffer + bufferSize();
+    functions.push_back(derivative);
+    evaluateSingleFunctionPoints(bufferSizeCoefficient() * pointsPerFunction, xMin, xMax,
+                                 *derivative, bufferCursor);
+    std::sort(buffer, buffer + bufferSize(), [](const Point& a, const Point& b) {
+        return a.x() < b.x();
+    });
 }
 
-unsigned FunctionEvaluator::bufferSizeCoefficient() const {
-    return cachingEnabled ? BUFFER_SIZE_COEFFICIENT : 1;
+
+ParsedFunction* FunctionEvaluator::computeDerivative(const ParsedFunction* function,
+                                                     const double dx) {
+    return new FunctionWrapper([function, dx](const double x) {
+        return ((*function)(x + dx) - (*function)(x - dx)) / (2 * dx);
+    });
 }
 
-Point* FunctionEvaluator::evaluateFunctionPoints(const unsigned resolution, const double xMin,
-                                                 const double xMax, const ParsedFunction& function,
-                                                 Point* bufferCursor) {
+FunctionEvaluator::~FunctionEvaluator() {
+    delete[] buffer;
+}
+
+void FunctionEvaluator::calculateFunctionPoints(const double xMin, const double xMax,
+                                                const unsigned resolution) const {
+    std::cout << "cache reevaluation\n";
+    const double width = xMax - xMin;
+    const double margin = width * (bufferSizeCoefficient() - 1) / 2;
+    Point* bufferCursor = buffer;
+    for (const auto functionPtr : functions) {
+        bufferCursor = evaluateSingleFunctionPoints(bufferSizeCoefficient() * resolution,
+                                                    xMin - margin, xMax + margin, *functionPtr,
+                                                    bufferCursor);
+    }
+    std::sort(buffer, buffer + bufferSize(), [](const Point& a, const Point& b) {
+        return a.x() < b.x();
+    });
+}
+
+Point* FunctionEvaluator::evaluateSingleFunctionPoints(const unsigned resolution, const double xMin,
+                                                       const double xMax,
+                                                       const ParsedFunction& function,
+                                                       Point* bufferCursor) {
     unsigned tail = 0;
     const double width = xMax - xMin;
     const double step = width / (resolution - 1);
@@ -40,33 +117,33 @@ Point* FunctionEvaluator::evaluateFunctionPoints(const unsigned resolution, cons
     return bufferCursor + tail;
 }
 
-void FunctionEvaluator::calculateFunctionPoints(const double xMin, const double xMax,
-                                                const unsigned resolution) const {
-    std::cout << "Cache reevaluation" << std::endl;
-    const double width = xMax - xMin;
-    const double margin = width * (bufferSizeCoefficient() - 1) / 2;
-    Point* bufferCursor = buffer;
-    for (const auto functionPtr : functions) {
-        bufferCursor = evaluateFunctionPoints(bufferSizeCoefficient() * resolution, xMin - margin,
-                                              xMax + margin, *functionPtr, bufferCursor);
-    }
-    std::sort(buffer, buffer + bufferSize(), [](const Point& a, const Point& b) {
-        return a.x() < b.x();
-    });
+size_t FunctionEvaluator::bufferSize() const {
+    return bufferSizeCoefficient() * pointsPerFunction * functions.size();
+}
+
+unsigned FunctionEvaluator::bufferSizeCoefficient() const {
+    return cachingEnabled ? BUFFER_SIZE_COEFFICIENT : 1;
 }
 
 bool FunctionEvaluator::outOfBounds(const double xMin, const double xMax) const {
     return xMin < buffer->x() || buffer[bufferSize() - 1].x() < xMax;
 }
 
-
-bool FunctionEvaluator::mangify(const double xMin, const double xMax) const {
+bool FunctionEvaluator::rangeSmaller(const double xMin, const double xMax) const {
     return (buffer[bufferSize() - 1].x() - buffer->x()) / bufferSizeCoefficient() - (xMax - xMin) >
            1e-13;
 }
 
-size_t FunctionEvaluator::bufferSize() const {
-    return bufferSizeCoefficient() * pointsPerFunction * functions.size();
+bool FunctionEvaluator::closeToBufferEnd(const Point* windowEnd) const {
+    return bufferSize() - (windowEnd - buffer) <= static_cast<unsigned>(std::round(
+               static_cast<double>(functions.size() * pointsPerFunction) *
+               MIN_CACHE_REEVALUATION_MARGIN));
+}
+
+bool FunctionEvaluator::closeToBufferStart(const Point* windowStart) const {
+    return windowStart - buffer <= static_cast<unsigned>(std::round(
+               static_cast<double>(functions.size() * pointsPerFunction) *
+               MIN_CACHE_REEVALUATION_MARGIN));
 }
 
 Rectangle FunctionEvaluator::calculateBounds(const Point* windowStart, const Point* windowEnd) {
@@ -87,70 +164,4 @@ Rectangle FunctionEvaluator::calculateBounds(const Point* windowStart, const Poi
         }
     }
     return {xMax - xMin, yMax - yMin, Point(xMin, yMin)};
-}
-
-bool FunctionEvaluator::closeToBufferEnd(const Point* windowEnd) const {
-    return bufferSize() - (windowEnd - buffer) <= static_cast<unsigned>(std::round(
-               static_cast<double>(functions.size() * pointsPerFunction) * 0.01));
-}
-
-PlotData* FunctionEvaluator::evaluate(const double xMin, const double xMax,
-                                      const unsigned pointsCount) {
-    if (xMin >= xMax) {
-        return nullptr;
-    }
-    if (pointsCount != pointsPerFunction || outOfBounds(xMin, xMax) || mangify(xMin, xMax)) {
-        delete buffer;
-        pointsPerFunction = pointsCount;
-        buffer = new Point[bufferSize()];
-        calculateFunctionPoints(xMin, xMax, pointsPerFunction);
-    }
-    const Point* windowStart = std::lower_bound(buffer, buffer + bufferSize(), xMin,
-                                                [](const Point& p, const double x) {
-                                                    return p.x() < x;
-                                                });
-    const Point* windowEnd = std::upper_bound(buffer, buffer + bufferSize(), xMax,
-                                              [](const double x, const Point& p) {
-                                                  return x < p.x();
-                                              });
-    auto* plotData = new PlotData(calculateBounds(windowStart, windowEnd), windowStart,
-                                  windowEnd - windowStart);
-    if (cachingEnabled && closeToBufferEnd(windowEnd)) {
-        std::thread backgroundThread([&] {
-            calculateFunctionPoints(xMin, xMax, pointsPerFunction);
-        });
-        backgroundThread.detach();
-    }
-    return plotData;
-}
-
-void FunctionEvaluator::pushFunction(const ParsedFunction* derivative) {
-    const double xMin = buffer->x();
-    const double xMax = buffer[bufferSize() - 1].x();
-    auto* newBuffer = new Point[bufferSize() + bufferSizeCoefficient() * pointsPerFunction];
-    std::copy_n(buffer, bufferSize(), newBuffer);
-    delete buffer;
-    buffer = newBuffer;
-    auto bufferCursor = buffer + bufferSize();
-    functions.push_back(derivative);
-    evaluateFunctionPoints(bufferSizeCoefficient() * pointsPerFunction, xMin, xMax, *derivative,
-                           bufferCursor);
-    std::sort(buffer, buffer + bufferSize(), [](const Point& a, const Point& b) {
-        return a.x() < b.x();
-    });
-}
-
-FunctionEvaluator::FunctionEvaluator(const std::vector<const ParsedFunction*>& functions,
-                                     const bool cachingEnabled): functions(functions),
-                                                                 cachingEnabled(cachingEnabled) { }
-
-ParsedFunction* FunctionEvaluator::computeDerivative(const ParsedFunction& function,
-                                                     const double xMin, const double xMax,
-                                                     const unsigned pointsCount) {
-    return new FunctionWrapper([xMin, xMax, &function, pointsCount](const double x) {
-        const auto dx = (xMax - xMin) / pointsCount;
-        const auto left = std::max(x - dx, xMin);
-        const auto right = std::min(x + dx, xMax);
-        return (function(right) - function(left)) / (right - left);
-    });
 }
