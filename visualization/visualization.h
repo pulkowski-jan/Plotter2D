@@ -57,7 +57,7 @@ class Visualizer {
 
             sf::Text& text();
 
-            void setAction(std::function<void()> action);
+            void setAction(const std::function<void()>& action);
 
             void trigger() const;
     };
@@ -86,7 +86,7 @@ class Visualizer {
 
     void drawUI(sf::RenderWindow& window);
 
-    static bool doublesSignificantlyDiffer(double a, double b);
+    bool doublesSignificantlyDiffer(double a, double b) const;
 
     bool shouldReevaluatePlotData() const;
 
@@ -95,7 +95,7 @@ class Visualizer {
     void panRight();
 
     public:
-        explicit Visualizer(std::vector<const ParsedFunction*> functions, double xMin, double xMax,
+        explicit Visualizer(const std::vector<const ParsedFunction*>& functions, double xMin, double xMax,
                             const plotter2d::Options& options);
 
         ~Visualizer();

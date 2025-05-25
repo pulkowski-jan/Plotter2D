@@ -14,12 +14,11 @@ static constexpr unsigned BUTTON_PADDING = 10;
 static constexpr double PAN_FACTOR = 0.15;
 static constexpr unsigned GRID_SIZE = 10;
 
-Visualizer::Visualizer(std::vector<const ParsedFunction*> functions, const double xMin,
+Visualizer::Visualizer(const std::vector<const ParsedFunction*>& functions, const double xMin,
                        const double xMax, const plotter2d::Options& options) : config(options),
-    evaluator(functions), plotData(nullptr), zoomFactor(1.0), xMin_(xMin), xMax_(xMax),
+    evaluator(functions, true), plotData(nullptr), zoomFactor(1.0), xMin_(xMin), xMax_(xMax),
     pointsCount_(options.resolution), yMin_(0), yMax_(0), rescaleY_(true),
-    useCustomPlotRange_(options.useCustomPlotRange), validPointCount_(0),
-    plotRange_(options.plotRange) {
+    useCustomPlotRange_(options.useCustomPlotRange), plotRange_(options.plotRange) {
     if (!font.loadFromFile("lato.ttf")) {
         std::cerr << "Warning: Failed to load font for buttons" << std::endl;
     }
@@ -46,7 +45,7 @@ sf::Text& Visualizer::Button::text() {
     return text_;
 }
 
-void Visualizer::Button::setAction(std::function<void()> action) {
+void Visualizer::Button::setAction(const std::function<void()>& action) {
     action_ = new std::function(action);
 }
 
@@ -286,8 +285,8 @@ void Visualizer::drawUI(sf::RenderWindow& window) {
     }
 }
 
-bool Visualizer::doublesSignificantlyDiffer(const double a, const double b) {
-    return std::abs(a - b) >= 1e-14;
+bool Visualizer::doublesSignificantlyDiffer(const double a, const double b) const {
+    return std::abs(a - b) >= (xMax_ - xMin_) / (pointsCount_ - 1);
 }
 
 bool Visualizer::shouldReevaluatePlotData() const {
@@ -317,8 +316,6 @@ void Visualizer::panRight() {
 void Visualizer::updatePlotData() {
     delete plotData;
 
-    std::cout << "Evaluating for: [" << xMin_ << "; " << xMax_ << "], with resolution " <<
-            pointsCount_ << "\n";
     plotData = evaluator.evaluate(xMin_, xMax_, pointsCount_);
 
     if (rescaleY_) {
@@ -364,11 +361,9 @@ void Visualizer::zoomOut() {
 }
 
 void Visualizer::derivate() {
-    std::vector<const ParsedFunction*>& parsedFunctions = evaluator.parsedFunctions();
-    const auto& lastDerivative = *parsedFunctions.back();
-    const ParsedFunction* derivative = evaluator.derivate(lastDerivative, xMin_, xMax_,
-                                                          pointsCount_);
-    parsedFunctions.push_back(derivative);
+    const auto& lastDerivative = *evaluator.parsedFunctions().back();
+    evaluator.pushFunction(
+        FunctionEvaluator::computeDerivative(lastDerivative, xMin_, xMax_, pointsCount_));
     updatePlotData();
 }
 
