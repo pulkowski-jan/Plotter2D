@@ -2,6 +2,9 @@
 
 #include <iostream>
 #include <optional>
+#include <sstream>
+#include <cmath>
+#include <iomanip>
 #include <SFML/Graphics.hpp>
 #include <SFML/Window.hpp>
 
@@ -18,9 +21,18 @@ Visualizer::Visualizer(const std::vector<const ParsedFunction*>& functions, cons
                        const double xMax, const plotter2d::Options& options) : config(options),
     evaluator(functions, true), plotData(nullptr), zoomFactor(1.0), xMin_(xMin), xMax_(xMax),
     pointsCount_(options.resolution), yMin_(0), yMax_(0), rescaleY_(true),
-    useCustomPlotRange_(options.useCustomPlotRange), plotRange_(options.plotRange) {
+    useCustomPlotRange_(options.useCustomPlotRange), plotRange_(options.plotRange),
+    showCoordinates(false), clickedPoint(0, 0) {
     if (!font.loadFromFile("lato.ttf")) {
         std::cerr << "Warning: Failed to load font for buttons" << std::endl;
+    }
+
+    // Initialize coordinate text
+    if (!font.getInfo().family.empty()) {
+        coordinateText.setFont(font);
+        coordinateText.setCharacterSize(16);
+        coordinateText.setFillColor(sf::Color::Black);
+        coordinateText.setPosition(10, 10);
     }
 }
 
@@ -53,6 +65,41 @@ void Visualizer::Button::trigger() const {
     if (action_) {
         (*action_)();
     }
+}
+
+Point Visualizer::screenToWorldCoordinates(const sf::Vector2f& screenPos, const sf::Vector2u& windowSize) const {
+    const unsigned offset[2] = {
+        static_cast<unsigned>(windowSize.x * PADDING_SIZE[0]),
+        static_cast<unsigned>(windowSize.y * PADDING_SIZE[1])
+    };
+    const unsigned effectiveSize[2] = {windowSize.x - 2 * offset[0], windowSize.y - 2 * offset[1]};
+
+    // Convert screen coordinates to effective coordinates (remove padding)
+    double effectiveX = screenPos.x - offset[0];
+    double effectiveY = screenPos.y - offset[1];
+
+    // Check if click is within the plot area
+    if (effectiveX < 0 || effectiveX > effectiveSize[0] || effectiveY < 0 || effectiveY > effectiveSize[1]) {
+        return Point(NAN, NAN); // Invalid point
+    }
+
+    // Flip Y coordinate (screen Y increases downward, world Y increases upward)
+    effectiveY = effectiveSize[1] - effectiveY;
+
+    // Convert to world coordinates
+    const double effectiveWidth = xMax_ - xMin_;
+    const double effectiveHeight = yMax_ - yMin_;
+
+    double centerX = (xMin_ + xMax_) / 2;
+    double centerY = (yMin_ + yMax_) / 2;
+
+    const double effectiveAnchorX = centerX - effectiveWidth / 2;
+    const double effectiveAnchorY = centerY - effectiveHeight / 2;
+
+    double worldX = effectiveAnchorX + (effectiveX / effectiveSize[0]) * effectiveWidth;
+    double worldY = effectiveAnchorY + (effectiveY / effectiveSize[1]) * effectiveHeight;
+
+    return Point(worldX, worldY);
 }
 
 void Visualizer::initializeButtons(const sf::Vector2u& windowSize) {
@@ -283,6 +330,11 @@ void Visualizer::drawUI(sf::RenderWindow& window) {
             window.draw(entry.second.text());
         }
     }
+
+    // Draw coordinate text if coordinates are being shown
+    if (showCoordinates && !font.getInfo().family.empty()) {
+        window.draw(coordinateText);
+    }
 }
 
 bool Visualizer::doublesSignificantlyDiffer(const double a, const double b) const {
@@ -387,23 +439,51 @@ void Visualizer::render() {
         while (window.pollEvent(event)) {
             if (event.type == sf::Event::Closed) {
                 window.close();
-            } else if (config.drawUi && event.type == sf::Event::MouseButtonPressed && event.
-                       mouseButton.button == sf::Mouse::Left) {
+            } else if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left) {
                 const auto mousePos = scaleMousePositionToAbsolute(
                     event.mouseButton.x, event.mouseButton.y, window.getSize());
-                std::cout << "Mouse Event received at: (" << event.mouseButton.x << ", " << event.
-                        mouseButton.y << "), scaled to (" << mousePos.x << ", " << mousePos.y <<
-                        ")\n";
 
-                auto triggered = std::find_if(buttons.cbegin(), buttons.cend(),
-                                              [&mousePos](auto& entry) {
-                                                  return isMouseInButton(
-                                                      mousePos, entry.second.rectangle());
-                                              });
-                if (triggered != buttons.cend()) {
-                    std::cout << "Button " << triggered->first << " triggered\n";
-                    triggered->second.trigger();
+                // Check if click is on a button (only if UI is enabled)
+                bool buttonClicked = false;
+                if (config.drawUi) {
+                    auto triggered = std::find_if(buttons.cbegin(), buttons.cend(),
+                                                  [&mousePos](auto& entry) {
+                                                      return isMouseInButton(
+                                                          mousePos, entry.second.rectangle());
+                                                  });
+                    if (triggered != buttons.cend()) {
+                        std::cout << "Button " << triggered->first << " triggered\n";
+                        triggered->second.trigger();
+                        buttonClicked = true;
+                    }
                 }
+
+                // If no button was clicked, handle coordinate display
+                if (!buttonClicked) {
+                    Point worldPoint = screenToWorldCoordinates(mousePos, {ABSOLUTE_WINDOW_SIZE, ABSOLUTE_WINDOW_SIZE});
+
+                    // Check if the click was within the plot area
+                    if (!std::isnan(worldPoint.x()) && !std::isnan(worldPoint.y())) {
+                        clickedPoint = worldPoint;
+                        showCoordinates = true;
+
+                        // Update coordinate text
+                        if (!font.getInfo().family.empty()) {
+                            std::ostringstream oss;
+                            oss << std::fixed << std::setprecision(3);
+                            oss << "(" << clickedPoint.x() << ", " << clickedPoint.y() << ")";
+                            coordinateText.setString(oss.str());
+                        }
+
+                        std::cout << "Clicked coordinates: (" << clickedPoint.x() << ", " << clickedPoint.y() << ")\n";
+                    } else {
+                        // Click was outside plot area, hide coordinates
+                        showCoordinates = false;
+                    }
+                }
+            } else if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Escape) {
+                // Hide coordinates when ESC is pressed
+                showCoordinates = false;
             }
         }
         if (shouldReevaluatePlotData()) {

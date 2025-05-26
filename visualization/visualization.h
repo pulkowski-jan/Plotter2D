@@ -10,6 +10,12 @@
 #include "model/plot_model.h"
 
 class Visualizer {
+    sf::Text coordinateText;
+    bool showCoordinates;
+    Point clickedPoint;
+
+    Point screenToWorldCoordinates(const sf::Vector2f& screenPos, const sf::Vector2u& windowSize) const;
+
     plotter2d::Options config;
     FunctionEvaluator evaluator;
     PlotData* plotData;
