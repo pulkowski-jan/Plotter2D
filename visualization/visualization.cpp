@@ -1,10 +1,9 @@
 #include "visualization.h"
 
-#include <iostream>
-#include <optional>
-#include <sstream>
 #include <cmath>
 #include <iomanip>
+#include <iostream>
+#include <optional>
 #include <SFML/Graphics.hpp>
 #include <SFML/Window.hpp>
 
@@ -18,11 +17,17 @@ static constexpr double PAN_FACTOR = 0.15;
 static constexpr unsigned GRID_SIZE = 10;
 
 Visualizer::Visualizer(const std::vector<const ParsedFunction*>& functions, const double xMin,
-                       const double xMax, const plotter2d::Options& options) : showCoordinates(false),
-    clickedPoint(0, 0), config(options), evaluator(functions, true), plotData(nullptr), zoomFactor(1.0),
-    xMin_(xMin), xMax_(xMax), pointsCount_(options.resolution), yMin_(0),
-    yMax_(0), rescaleY_(true),
-    useCustomPlotRange_(options.useCustomPlotRange), plotRange_(options.plotRange) {
+                       const double xMax,
+                       const plotter2d::Options& options) : showCoordinates(false),
+                                                            clickedPoint(0, 0), config(options),
+                                                            evaluator(functions, true),
+                                                            plotData(nullptr), zoomFactor(1.0),
+                                                            xMin_(xMin), xMax_(xMax),
+                                                            pointsCount_(options.resolution),
+                                                            yMin_(0), yMax_(0), rescaleY_(true),
+                                                            useCustomPlotRange_(
+                                                                options.useCustomPlotRange),
+                                                            plotRange_(options.plotRange) {
     if (!font.loadFromFile("lato.ttf")) {
         std::cerr << "Warning: Failed to load font for buttons" << std::endl;
     }
