@@ -14,7 +14,8 @@ class Visualizer {
     bool showCoordinates;
     Point clickedPoint;
 
-    Point screenToWorldCoordinates(const sf::Vector2f& screenPos, const sf::Vector2u& windowSize) const;
+    Point screenToWorldCoordinates(const sf::Vector2f& screenPos,
+                                   const sf::Vector2u& windowSize) const;
 
     plotter2d::Options config;
     FunctionEvaluator evaluator;
@@ -102,8 +103,8 @@ class Visualizer {
     void panRight();
 
     public:
-        explicit Visualizer(const std::vector<const ParsedFunction*>& functions, double xMin, double xMax,
-                            const plotter2d::Options& options);
+        explicit Visualizer(const std::vector<const ParsedFunction*>& functions, double xMin,
+                            double xMax, const plotter2d::Options& options);
 
         ~Visualizer();
 
