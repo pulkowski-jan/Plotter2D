@@ -27,12 +27,17 @@ Visualizer::Visualizer(const std::vector<const ParsedFunction*>& functions, cons
         std::cerr << "Warning: Failed to load font for buttons" << std::endl;
     }
 
-    // Initialize coordinate text
+    // Initialize coordinate text and frame
     if (!font.getInfo().family.empty()) {
         coordinateText.setFont(font);
         coordinateText.setCharacterSize(16);
         coordinateText.setFillColor(sf::Color::Black);
-        coordinateText.setPosition(10, 10);
+        coordinateText.setPosition(15, 15); // Slight padding from frame edge
+
+        // Initialize coordinate frame
+        coordinateFrame.setFillColor(sf::Color::White);
+        coordinateFrame.setOutlineColor(sf::Color::Black);
+        coordinateFrame.setOutlineThickness(1);
     }
 }
 
@@ -331,11 +336,13 @@ void Visualizer::drawUI(sf::RenderWindow& window) {
         }
     }
 
-    // Draw coordinate text if coordinates are being shown
+    // Draw coordinate frame and text if coordinates are being shown
     if (showCoordinates && !font.getInfo().family.empty()) {
+        window.draw(coordinateFrame);
         window.draw(coordinateText);
     }
 }
+
 
 bool Visualizer::doublesSignificantlyDiffer(const double a, const double b) const {
     return std::abs(a - b) >= (xMax_ - xMin_) / (pointsCount_ - 1);
@@ -458,8 +465,7 @@ void Visualizer::render() {
                     }
                 }
 
-                // If no button was clicked, handle coordinate display
-                if (!buttonClicked) {
+s                if (!buttonClicked) {
                     Point worldPoint = screenToWorldCoordinates(mousePos, {ABSOLUTE_WINDOW_SIZE, ABSOLUTE_WINDOW_SIZE});
 
                     // Check if the click was within the plot area
@@ -473,6 +479,22 @@ void Visualizer::render() {
                             oss << std::fixed << std::setprecision(3);
                             oss << "(" << clickedPoint.x() << ", " << clickedPoint.y() << ")";
                             coordinateText.setString(oss.str());
+
+                            // Update frame size and position based on text bounds
+                            sf::FloatRect textBounds = coordinateText.getLocalBounds();
+                            const float padding = 6.0f;
+
+                            coordinateFrame.setSize(sf::Vector2f(
+                                textBounds.width + 2 * padding,
+                                textBounds.height + 2 * padding
+                            ));
+                            coordinateFrame.setPosition(10, 10);
+
+                            // Center text within frame
+                            coordinateText.setPosition(
+                                coordinateFrame.getPosition().x + padding,
+                                coordinateFrame.getPosition().y + padding - textBounds.top
+                            );
                         }
 
                         std::cout << "Clicked coordinates: (" << clickedPoint.x() << ", " << clickedPoint.y() << ")\n";
@@ -481,6 +503,7 @@ void Visualizer::render() {
                         showCoordinates = false;
                     }
                 }
+
             } else if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Escape) {
                 // Hide coordinates when ESC is pressed
                 showCoordinates = false;

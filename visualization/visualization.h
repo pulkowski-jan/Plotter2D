@@ -33,6 +33,7 @@ class Visualizer {
     bool useCustomPlotRange_;
     mutable int validPointCount_{};
     std::pair<double, double> plotRange_;
+    sf::RectangleShape coordinateFrame;
     /*
      * BUTTONS
      */
